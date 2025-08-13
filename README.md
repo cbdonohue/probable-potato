@@ -9,17 +9,40 @@ A minimal, high-performance C++ HTTP server application designed for Docker Swar
 ## Features
 
 - 🚀 **High Performance**: Native C++ implementation
+- 🧩 **Modular Architecture**: Pluggable modules that can exist individually or interact
+- 🔄 **Inter-Module Communication**: Message bus for loose coupling between modules
 - 🐳 **Docker Swarm Ready**: Optimized for container orchestration
 - 🧪 **Well Tested**: Comprehensive unit test suite using Google Test (20 tests)
 - 🔧 **Multiple Build Systems**: Support for both Make and CMake
 - 📦 **Production Ready**: Multi-stage Docker builds
+- 🔍 **Health Monitoring**: Built-in health monitoring system
 - 🔄 **Auto Recovery**: Automatic restart on failure
 - 📊 **Health Monitoring**: Built-in health check endpoint
+
+## 🧩 Modular Architecture
+
+SwarmApp is built with a modular architecture that allows components to exist independently while enabling seamless interaction:
+
+### Core Components
+- **Module Interface**: Base class that all modules inherit from
+- **Module Manager**: Handles module lifecycle, dependencies, and configuration
+- **Message Bus**: Enables inter-module communication through publish/subscribe pattern
+
+### Available Modules
+- **HTTP Server Module**: Provides RESTful API endpoints
+- **Health Monitor Module**: Monitors system health and provides status reporting
+
+### Module Benefits
+- **Scalability**: Add or remove modules without affecting others
+- **Maintainability**: Each module has a single responsibility
+- **Testability**: Modules can be tested in isolation
+- **Flexibility**: Modules can be configured independently
+- **Extensibility**: Easy to add new modules
 
 ## Quick Start
 
 ### Prerequisites
-- C++11 compatible compiler (GCC, Clang, or MSVC)
+- C++17 compatible compiler (GCC, Clang, or MSVC)
 - CMake 3.10+ (optional, for CMake builds)
 - Docker (for containerized deployment)
 
@@ -90,7 +113,7 @@ docker stack ps swarm-app
 
 5. **Access the application**:
 ```bash
-curl http://localhost:5000
+curl http://localhost:8080
 ```
 
 ## Management Commands
@@ -137,9 +160,23 @@ See [CHANGELOG.md](CHANGELOG.md) for a list of changes and releases.
 ```
 swarm-app/
 ├── src/                    # Source files
-│   └── main.cpp           # Main application entry point
+│   ├── main.cpp           # Main application entry point
+│   ├── core/              # Core module system
+│   │   ├── message_bus.cpp
+│   │   └── module_manager.cpp
+│   └── modules/           # Individual modules
+│       ├── http-server/   # HTTP server module
+│       │   └── http_server_module.cpp
+│       └── health-monitor/ # Health monitoring module
+│           └── health_monitor_module.cpp
 ├── include/               # Header files
-│   └── server.h           # HTTP server class definition
+│   ├── core/              # Core module interfaces
+│   │   ├── module.h       # Base module interface
+│   │   ├── message_bus.h  # Inter-module communication
+│   │   └── module_manager.h # Module lifecycle management
+│   └── modules/           # Module-specific headers
+│       ├── http_server_module.h
+│       └── health_monitor_module.h
 ├── tests/                 # Test files
 │   └── test_main.cpp      # Unit test suite
 ├── docker/                # Docker configurations

@@ -2,8 +2,11 @@ FROM gcc:11 as builder
 
 WORKDIR /app
 
+# Install CMake
+RUN apt-get update && apt-get install -y cmake && rm -rf /var/lib/apt/lists/*
+
 COPY . .
-RUN make clean && make
+RUN rm -rf build && mkdir build && cd build && cmake .. && make
 
 FROM debian:bullseye-slim
 
@@ -13,8 +16,8 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY --from=builder /app/swarm-app .
+COPY --from=builder /app/build/swarm-app .
 
-EXPOSE 5000
+EXPOSE 8080
 
 CMD ["./swarm-app"]
