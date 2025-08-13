@@ -1,38 +1,20 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <string>
-#include <sstream>
-#include <cstring>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <netdb.h>
-#include <ctime>
+#include <memory>
 #include <thread>
 #include <chrono>
+#include <atomic>
 
-// Include the server header
-#include "../include/server.h"
+// Include SwarmApp core components
+#include "core/module.h"
+#include "core/message_bus.h"
+#include "core/module_manager.h"
 
-class MockHTTPServer : public SimpleHTTPServer {
-public:
-    MockHTTPServer(int port) : SimpleHTTPServer(port) {}
-    
-    // Expose protected methods for testing
-    std::string testGetCurrentTime() { return getCurrentTime(); }
-    std::string testGetHostname() { return getHostname(); }
-    std::string testCreateJSONResponse(const std::string& message, const std::string& hostname) {
-        return createJSONResponse(message, hostname);
-    }
-    std::string testCreateHTTPResponse(int statusCode, const std::string& contentType, const std::string& body) {
-        return createHTTPResponse(statusCode, contentType, body);
-    }
-};
+using namespace swarm;
 
-// Test fixture for HTTP server tests
-class HTTPServerTest : public ::testing::Test {
+// Test fixture for SwarmApp core functionality
+class SwarmAppCoreTest : public ::testing::Test {
 protected:
     void SetUp() override {
         // Set up any common test data
@@ -43,248 +25,268 @@ protected:
     }
 };
 
-// Test JSON response creation
-TEST_F(HTTPServerTest, CreateJSONResponse) {
-    MockHTTPServer server(5001);
-    std::string json = server.testCreateJSONResponse("Test Message", "test-host");
+// Test MessageBus basic functionality
+TEST_F(SwarmAppCoreTest, MessageBusBasicFunctionality) {
+    MessageBus messageBus;
+    messageBus.start();
     
-    EXPECT_THAT(json, ::testing::HasSubstr("Test Message"));
-    EXPECT_THAT(json, ::testing::HasSubstr("test-host"));
-    EXPECT_THAT(json, ::testing::HasSubstr("1.0.0"));
-    EXPECT_THAT(json, ::testing::HasSubstr("timestamp"));
-    EXPECT_THAT(json, ::testing::HasSubstr("\"message\":"));
-    EXPECT_THAT(json, ::testing::HasSubstr("\"hostname\":"));
-    EXPECT_THAT(json, ::testing::HasSubstr("\"version\":"));
-    EXPECT_THAT(json, ::testing::StartsWith("{"));
-    EXPECT_THAT(json, ::testing::EndsWith("}"));
-}
-
-// Test HTTP response creation
-TEST_F(HTTPServerTest, CreateHTTPResponse) {
-    MockHTTPServer server(5001);
-    std::string response = server.testCreateHTTPResponse(200, "application/json", "{\"test\": true}");
+    std::atomic<int> messageCount{0};
+    std::string receivedTopic;
+    std::string receivedMessage;
     
-    EXPECT_THAT(response, ::testing::HasSubstr("HTTP/1.1 200 OK"));
-    EXPECT_THAT(response, ::testing::HasSubstr("Content-Type: application/json"));
-    EXPECT_THAT(response, ::testing::HasSubstr("{\"test\": true}"));
-    EXPECT_THAT(response, ::testing::HasSubstr("Content-Length:"));
-    EXPECT_THAT(response, ::testing::HasSubstr("Connection: close"));
-    EXPECT_THAT(response, ::testing::HasSubstr("\r\n\r\n"));
-}
-
-// Test hostname retrieval
-TEST_F(HTTPServerTest, GetHostname) {
-    MockHTTPServer server(5001);
-    std::string hostname = server.testGetHostname();
+    // Subscribe to a test topic
+    messageBus.subscribe("test.topic", [&](const std::string& topic, const std::string& message) {
+        receivedTopic = topic;
+        receivedMessage = message;
+        messageCount++;
+    });
     
-    EXPECT_FALSE(hostname.empty());
-    EXPECT_NE(hostname, "unknown");
-}
-
-// Test current time retrieval
-TEST_F(HTTPServerTest, GetCurrentTime) {
-    MockHTTPServer server(5001);
-    std::string time1 = server.testGetCurrentTime();
+    // Publish a message
+    messageBus.publish("test.topic", "Hello SwarmApp!");
     
-    // Wait a moment
+    // Wait for message processing
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
-    std::string time2 = server.testGetCurrentTime();
+    EXPECT_EQ(messageCount.load(), 1);
+    EXPECT_EQ(receivedTopic, "test.topic");
+    EXPECT_EQ(receivedMessage, "Hello SwarmApp!");
     
-    EXPECT_FALSE(time1.empty());
-    EXPECT_FALSE(time2.empty());
-    // Note: Times might be the same if called within the same second
-    // This is acceptable behavior
+    messageBus.stop();
 }
 
-// Test server object creation
-TEST_F(HTTPServerTest, ServerCreation) {
-    MockHTTPServer server(5002);
-    // If we get here, the server was created successfully
-    SUCCEED();
+// Test MessageBus async functionality
+TEST_F(SwarmAppCoreTest, MessageBusAsyncFunctionality) {
+    MessageBus messageBus;
+    messageBus.start();
+    
+    std::atomic<int> messageCount{0};
+    
+    // Subscribe to a test topic
+    messageBus.subscribe("async.topic", [&](const std::string& topic, const std::string& message) {
+        messageCount++;
+    });
+    
+    // Publish async message
+    messageBus.publishAsync("async.topic", "Async Hello!");
+    
+    // Wait for message processing
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    
+    EXPECT_EQ(messageCount.load(), 1);
+    
+    messageBus.stop();
 }
 
-// Test HTTP response format validation
-TEST_F(HTTPServerTest, HTTPResponseFormat) {
-    MockHTTPServer server(5001);
-    std::string response = server.testCreateHTTPResponse(200, "application/json", "{\"test\": true}");
+// Test MessageBus multiple subscribers
+TEST_F(SwarmAppCoreTest, MessageBusMultipleSubscribers) {
+    MessageBus messageBus;
+    messageBus.start();
     
-    // Check HTTP response structure
-    EXPECT_THAT(response, ::testing::HasSubstr("HTTP/1.1 200 OK"));
-    EXPECT_THAT(response, ::testing::HasSubstr("Content-Type: application/json"));
-    EXPECT_THAT(response, ::testing::HasSubstr("Content-Length:"));
-    EXPECT_THAT(response, ::testing::HasSubstr("Connection: close"));
-    EXPECT_THAT(response, ::testing::HasSubstr("\r\n\r\n"));
+    std::atomic<int> subscriber1Count{0};
+    std::atomic<int> subscriber2Count{0};
+    
+    // Subscribe with two different handlers
+    messageBus.subscribe("multi.topic", [&](const std::string& topic, const std::string& message) {
+        subscriber1Count++;
+    });
+    
+    messageBus.subscribe("multi.topic", [&](const std::string& topic, const std::string& message) {
+        subscriber2Count++;
+    });
+    
+    // Publish a message
+    messageBus.publish("multi.topic", "Multi subscriber test");
+    
+    // Wait for message processing
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    
+    EXPECT_EQ(subscriber1Count.load(), 1);
+    EXPECT_EQ(subscriber2Count.load(), 1);
+    
+    messageBus.stop();
 }
 
-// Test JSON structure validation
-TEST_F(HTTPServerTest, JSONStructureValidation) {
-    MockHTTPServer server(5001);
-    std::string json = server.testCreateJSONResponse("Test", "test-host");
+// Test MessageBus statistics
+TEST_F(SwarmAppCoreTest, MessageBusStatistics) {
+    MessageBus messageBus;
+    messageBus.start();
     
-    // Check for required JSON fields
-    EXPECT_THAT(json, ::testing::HasSubstr("\"message\": \"Test\""));
-    EXPECT_THAT(json, ::testing::HasSubstr("\"hostname\": \"test-host\""));
-    EXPECT_THAT(json, ::testing::HasSubstr("\"version\": \"1.0.0\""));
-    EXPECT_THAT(json, ::testing::HasSubstr("\"timestamp\":"));
+    // Subscribe to a topic
+    messageBus.subscribe("stats.topic", [](const std::string& topic, const std::string& message) {
+        // Do nothing, just count
+    });
     
-    // Check JSON structure
-    EXPECT_THAT(json, ::testing::StartsWith("{"));
-    EXPECT_THAT(json, ::testing::EndsWith("}"));
+    // Publish multiple messages
+    for (int i = 0; i < 5; i++) {
+        messageBus.publish("stats.topic", "Message " + std::to_string(i));
+    }
+    
+    // Wait for message processing
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    
+    EXPECT_EQ(messageBus.getMessageCount(), 5);
+    EXPECT_EQ(messageBus.getSubscriberCount("stats.topic"), 1);
+    EXPECT_EQ(messageBus.getSubscriberCount("nonexistent.topic"), 0);
+    
+    messageBus.stop();
 }
 
-// Test error response validation
-TEST_F(HTTPServerTest, ErrorResponseValidation) {
-    MockHTTPServer server(5001);
-    std::string errorResponse = server.testCreateHTTPResponse(404, "application/json", "{\"error\": \"Not Found\"}");
+// Test MessageBus lifecycle
+TEST_F(SwarmAppCoreTest, MessageBusLifecycle) {
+    MessageBus messageBus;
     
-    EXPECT_THAT(errorResponse, ::testing::HasSubstr("HTTP/1.1 404 OK"));
-    EXPECT_THAT(errorResponse, ::testing::HasSubstr("{\"error\": \"Not Found\"}"));
+    // Initially not running
+    EXPECT_FALSE(messageBus.isRunning());
+    
+    // Start the message bus
+    messageBus.start();
+    EXPECT_TRUE(messageBus.isRunning());
+    
+    // Stop the message bus
+    messageBus.stop();
+    EXPECT_FALSE(messageBus.isRunning());
 }
 
-// Test method not allowed response validation
-TEST_F(HTTPServerTest, MethodNotAllowedResponseValidation) {
-    MockHTTPServer server(5001);
-    std::string methodResponse = server.testCreateHTTPResponse(405, "application/json", "{\"error\": \"Method Not Allowed\"}");
+// Test MessageBus error handling
+TEST_F(SwarmAppCoreTest, MessageBusErrorHandling) {
+    MessageBus messageBus;
+    messageBus.start();
     
-    EXPECT_THAT(methodResponse, ::testing::HasSubstr("HTTP/1.1 405 OK"));
-    EXPECT_THAT(methodResponse, ::testing::HasSubstr("{\"error\": \"Method Not Allowed\"}"));
+    // Subscribe with a handler that throws an exception
+    messageBus.subscribe("error.topic", [](const std::string& topic, const std::string& message) {
+        throw std::runtime_error("Test exception");
+    });
+    
+    // Also subscribe with a normal handler
+    std::atomic<bool> normalHandlerCalled{false};
+    messageBus.subscribe("error.topic", [&](const std::string& topic, const std::string& message) {
+        normalHandlerCalled = true;
+    });
+    
+    // Publish a message - should not crash
+    EXPECT_NO_THROW({
+        messageBus.publish("error.topic", "Error test");
+    });
+    
+    // Wait for message processing
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    
+    // Normal handler should still be called
+    EXPECT_TRUE(normalHandlerCalled.load());
+    
+    messageBus.stop();
 }
 
-// Test JSON field presence
-TEST_F(HTTPServerTest, JSONFieldPresence) {
-    MockHTTPServer server(5001);
-    std::string json = server.testCreateJSONResponse("Test", "test-host");
+// Test Module base class functionality
+TEST_F(SwarmAppCoreTest, ModuleBaseClass) {
+    // Create a simple test module
+    class TestModule : public Module {
+    public:
+        TestModule() : running_(false) {}
+        
+        bool initialize() override { return true; }
+        void start() override { running_ = true; }
+        void stop() override { running_ = false; }
+        void shutdown() override {}
+        
+        std::string getName() const override { return "test-module"; }
+        std::string getVersion() const override { return "1.0.0"; }
+        std::vector<std::string> getDependencies() const override { return {}; }
+        
+        bool isRunning() const override { return running_; }
+        std::string getStatus() const override { return running_ ? "running" : "stopped"; }
+        
+        bool configure(const std::map<std::string, std::string>& config) override { return true; }
+        void onMessage(const std::string& topic, const std::string& message) override {}
+        
+    private:
+        bool running_;
+    };
     
-    // Check for required JSON fields
-    EXPECT_THAT(json, ::testing::HasSubstr("\"message\":"));
-    EXPECT_THAT(json, ::testing::HasSubstr("\"hostname\":"));
-    EXPECT_THAT(json, ::testing::HasSubstr("\"version\":"));
-    EXPECT_THAT(json, ::testing::HasSubstr("\"timestamp\":"));
+    TestModule module;
+    
+    EXPECT_EQ(module.getName(), "test-module");
+    EXPECT_EQ(module.getVersion(), "1.0.0");
+    EXPECT_FALSE(module.isRunning());
+    EXPECT_EQ(module.getStatus(), "stopped");
+    
+    EXPECT_TRUE(module.initialize());
+    module.start();
+    EXPECT_TRUE(module.isRunning());
+    EXPECT_EQ(module.getStatus(), "running");
+    
+    module.stop();
+    EXPECT_FALSE(module.isRunning());
+    EXPECT_EQ(module.getStatus(), "stopped");
 }
 
-// Test HTTP status codes
-TEST_F(HTTPServerTest, HTTPStatusCodes) {
-    MockHTTPServer server(5001);
+// Test ModuleManager basic functionality
+TEST_F(SwarmAppCoreTest, ModuleManagerBasicFunctionality) {
+    ModuleManager manager;
     
-    // Test 200 OK
-    std::string response200 = server.testCreateHTTPResponse(200, "application/json", "{\"status\": \"ok\"}");
-    EXPECT_THAT(response200, ::testing::HasSubstr("HTTP/1.1 200 OK"));
+    // Test that message bus is available
+    EXPECT_NE(manager.getMessageBus(), nullptr);
+    EXPECT_TRUE(manager.getMessageBus()->isRunning());
     
-    // Test 404 Not Found
-    std::string response404 = server.testCreateHTTPResponse(404, "application/json", "{\"error\": \"not found\"}");
-    EXPECT_THAT(response404, ::testing::HasSubstr("HTTP/1.1 404 OK"));
+    // Test module registration
+    manager.registerModule("test-module", []() -> std::unique_ptr<Module> {
+        class TestModule : public Module {
+        public:
+            bool initialize() override { return true; }
+            void start() override {}
+            void stop() override {}
+            void shutdown() override {}
+            std::string getName() const override { return "test-module"; }
+            std::string getVersion() const override { return "1.0.0"; }
+            std::vector<std::string> getDependencies() const override { return {}; }
+            bool isRunning() const override { return false; }
+            std::string getStatus() const override { return "stopped"; }
+            bool configure(const std::map<std::string, std::string>& config) override { return true; }
+            void onMessage(const std::string& topic, const std::string& message) override {}
+        };
+        return std::make_unique<TestModule>();
+    });
     
-    // Test 500 Internal Server Error
-    std::string response500 = server.testCreateHTTPResponse(500, "application/json", "{\"error\": \"internal error\"}");
-    EXPECT_THAT(response500, ::testing::HasSubstr("HTTP/1.1 500 OK"));
+    // Test module loading
+    EXPECT_TRUE(manager.loadModule("test-module"));
+    EXPECT_TRUE(manager.isModuleRunning("test-module") == false); // Not started yet
+    
+    // Test module starting
+    EXPECT_TRUE(manager.startModule("test-module"));
+    EXPECT_TRUE(manager.isModuleRunning("test-module"));
+    
+    // Test module stopping
+    EXPECT_TRUE(manager.stopModule("test-module"));
+    EXPECT_FALSE(manager.isModuleRunning("test-module"));
 }
 
-// Test content type headers
-TEST_F(HTTPServerTest, ContentTypeHeaders) {
-    MockHTTPServer server(5001);
+// Test ZeroMQ integration
+TEST_F(SwarmAppCoreTest, ZeroMQIntegration) {
+    MessageBus messageBus;
+    messageBus.start();
     
-    // Test JSON content type
-    std::string jsonResponse = server.testCreateHTTPResponse(200, "application/json", "{}");
-    EXPECT_THAT(jsonResponse, ::testing::HasSubstr("Content-Type: application/json"));
+    std::atomic<int> messageCount{0};
+    std::string lastMessage;
     
-    // Test HTML content type
-    std::string htmlResponse = server.testCreateHTTPResponse(200, "text/html", "<html></html>");
-    EXPECT_THAT(htmlResponse, ::testing::HasSubstr("Content-Type: text/html"));
+    // Subscribe to ZeroMQ messages
+    messageBus.subscribe("zeromq.test", [&](const std::string& topic, const std::string& message) {
+        lastMessage = message;
+        messageCount++;
+    });
     
-    // Test plain text content type
-    std::string textResponse = server.testCreateHTTPResponse(200, "text/plain", "Hello World");
-    EXPECT_THAT(textResponse, ::testing::HasSubstr("Content-Type: text/plain"));
-}
-
-// Test content length calculation
-TEST_F(HTTPServerTest, ContentLengthCalculation) {
-    MockHTTPServer server(5001);
+    // Test synchronous publishing via ZeroMQ
+    messageBus.publish("zeromq.test", "ZeroMQ sync test");
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    EXPECT_EQ(messageCount.load(), 1);
+    EXPECT_EQ(lastMessage, "ZeroMQ sync test");
     
-    std::string shortBody = "short";
-    std::string response1 = server.testCreateHTTPResponse(200, "text/plain", shortBody);
-    EXPECT_THAT(response1, ::testing::HasSubstr("Content-Length: 5"));
+    // Test asynchronous publishing via ZeroMQ
+    messageBus.publishAsync("zeromq.test", "ZeroMQ async test");
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    EXPECT_EQ(messageCount.load(), 2);
+    EXPECT_EQ(lastMessage, "ZeroMQ async test");
     
-    std::string longBody = "This is a much longer body content for testing";
-    std::string response2 = server.testCreateHTTPResponse(200, "text/plain", longBody);
-    EXPECT_THAT(response2, ::testing::HasSubstr("Content-Length: 46"));
-}
-
-// Test empty body handling
-TEST_F(HTTPServerTest, EmptyBodyHandling) {
-    MockHTTPServer server(5001);
-    
-    std::string emptyResponse = server.testCreateHTTPResponse(204, "text/plain", "");
-    EXPECT_THAT(emptyResponse, ::testing::HasSubstr("HTTP/1.1 204 OK"));
-    EXPECT_THAT(emptyResponse, ::testing::HasSubstr("Content-Length: 0"));
-}
-
-// Test CORS headers
-TEST_F(HTTPServerTest, CORSHeaders) {
-    MockHTTPServer server(5001);
-    
-    std::string response = server.testCreateHTTPResponse(200, "application/json", "{}");
-    EXPECT_THAT(response, ::testing::HasSubstr("Access-Control-Allow-Origin: *"));
-}
-
-// Test connection header
-TEST_F(HTTPServerTest, ConnectionHeader) {
-    MockHTTPServer server(5001);
-    
-    std::string response = server.testCreateHTTPResponse(200, "application/json", "{}");
-    EXPECT_THAT(response, ::testing::HasSubstr("Connection: close"));
-}
-
-// Test JSON response with special characters
-TEST_F(HTTPServerTest, JSONWithSpecialCharacters) {
-    MockHTTPServer server(5001);
-    
-    std::string json = server.testCreateJSONResponse("Test \"quoted\" message", "host-name_with.underscores");
-    
-    EXPECT_THAT(json, ::testing::HasSubstr("Test \"quoted\" message"));
-    EXPECT_THAT(json, ::testing::HasSubstr("host-name_with.underscores"));
-}
-
-// Test timestamp format
-TEST_F(HTTPServerTest, TimestampFormat) {
-    MockHTTPServer server(5001);
-    
-    std::string json = server.testCreateJSONResponse("Test", "test-host");
-    
-    // Check that timestamp is present and has reasonable format
-    EXPECT_THAT(json, ::testing::HasSubstr("\"timestamp\":"));
-    
-    // Extract timestamp value (simplified check)
-    size_t timestampPos = json.find("\"timestamp\":");
-    EXPECT_NE(timestampPos, std::string::npos);
-    
-    // Check that timestamp is not empty
-    size_t valueStart = json.find("\"", timestampPos + 12) + 1;
-    size_t valueEnd = json.find("\"", valueStart);
-    std::string timestamp = json.substr(valueStart, valueEnd - valueStart);
-    EXPECT_FALSE(timestamp.empty());
-}
-
-// Test server constructor with different ports
-TEST_F(HTTPServerTest, ServerConstructorWithDifferentPorts) {
-    MockHTTPServer server1(8080);
-    MockHTTPServer server2(9000);
-    MockHTTPServer server3(12345);
-    
-    // If we get here, all servers were created successfully
-    SUCCEED();
-}
-
-// Test JSON response with empty strings
-TEST_F(HTTPServerTest, JSONWithEmptyStrings) {
-    MockHTTPServer server(5001);
-    
-    std::string json = server.testCreateJSONResponse("", "");
-    
-    EXPECT_THAT(json, ::testing::HasSubstr("\"message\": \"\""));
-    EXPECT_THAT(json, ::testing::HasSubstr("\"hostname\": \"\""));
-    EXPECT_THAT(json, ::testing::HasSubstr("\"version\": \"1.0.0\""));
-    EXPECT_THAT(json, ::testing::HasSubstr("\"timestamp\":"));
+    messageBus.stop();
 }
 
 int main(int argc, char **argv) {

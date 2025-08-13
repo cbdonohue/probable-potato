@@ -1,23 +1,60 @@
 # SwarmApp
 
-A minimal, high-performance C++ HTTP server application designed for Docker Swarm deployment.
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![C++](https://img.shields.io/badge/C%2B%2B-11-blue.svg)](https://isocpp.org/)
-[![CMake](https://img.shields.io/badge/CMake-3.10+-green.svg)](https://cmake.org/)
+A modular, high-performance application framework with inter-module communication using ZeroMQ.
 
 ## Features
 
-- 🚀 **High Performance**: Native C++ implementation
-- 🧩 **Modular Architecture**: Pluggable modules that can exist individually or interact
-- 🔄 **Inter-Module Communication**: Message bus for loose coupling between modules
-- 🐳 **Docker Swarm Ready**: Optimized for container orchestration
-- 🧪 **Well Tested**: Comprehensive unit test suite using Google Test (20 tests)
-- 🔧 **Multiple Build Systems**: Support for both Make and CMake
-- 📦 **Production Ready**: Multi-stage Docker builds
-- 🔍 **Health Monitoring**: Built-in health monitoring system
-- 🔄 **Auto Recovery**: Automatic restart on failure
-- 📊 **Health Monitoring**: Built-in health check endpoint
+- **Modular Architecture**: Plugin-based module system for easy extensibility
+- **High-Performance Messaging**: ZeroMQ-based message bus for inter-module communication
+- **Health Monitoring**: Built-in health check and monitoring capabilities
+- **HTTP Server**: Configurable HTTP server module
+- **Thread-Safe**: Full thread safety with atomic operations and proper synchronization
+- **Cross-Platform**: Works on Linux, Windows, and macOS
+
+## ZeroMQ Integration
+
+SwarmApp uses ZeroMQ for high-performance, distributed messaging between modules. This provides:
+
+- **Better Performance**: Optimized message routing and delivery
+- **Scalability**: Support for distributed messaging across processes
+- **Reliability**: Battle-tested messaging infrastructure
+- **Backward Compatibility**: Same API as the previous custom implementation
+
+### Installation
+
+Install ZeroMQ dependencies:
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install libzmq3-dev pkg-config
+
+# CentOS/RHEL/Fedora
+sudo yum install zeromq-devel pkgconfig
+
+# Arch Linux
+sudo pacman -S zeromq pkg-config
+
+# Or use the provided script
+./scripts/install_zeromq.sh
+```
+
+### Building
+
+```bash
+mkdir -p build && cd build
+cmake ..
+make
+```
+
+### Testing
+
+```bash
+# Run all tests
+make test
+
+# Run specific ZeroMQ tests
+./test-zeromq-message-bus
+```
 
 ## 🧩 Modular Architecture
 

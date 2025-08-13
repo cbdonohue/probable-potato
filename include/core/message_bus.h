@@ -9,10 +9,14 @@
 #include <mutex>
 #include <thread>
 #include <condition_variable>
+#include <atomic>
+
+// ZeroMQ includes
+#include <zmq.hpp>
 
 namespace swarm {
 
-// Message bus for inter-module communication
+// Message bus for inter-module communication using ZeroMQ
 class MessageBus {
 public:
     using MessageHandler = std::function<void(const std::string&, const std::string&)>;
@@ -45,15 +49,29 @@ private:
     };
     
     void processMessages();
+    void setupZeroMQ();
+    void cleanupZeroMQ();
     
+    // ZeroMQ components
+    std::unique_ptr<zmq::context_t> context_;
+    std::unique_ptr<zmq::socket_t> publisher_socket_;
+    std::unique_ptr<zmq::socket_t> subscriber_socket_;
+    
+    // Internal message handling
     std::map<std::string, std::vector<MessageHandler>> subscribers_;
     std::vector<Message> messageQueue_;
     mutable std::mutex subscribersMutex_;
     std::mutex queueMutex_;
     std::condition_variable queueCondition_;
     std::thread workerThread_;
-    bool running_;
-    size_t messageCount_;
+    std::atomic<bool> running_;
+    std::atomic<size_t> messageCount_;
+    
+    // ZeroMQ configuration
+    static constexpr const char* PUBLISHER_ENDPOINT = "tcp://127.0.0.1:5555";
+    static constexpr const char* SUBSCRIBER_ENDPOINT = "tcp://127.0.0.1:5556";
+    static constexpr int MAX_PORT_RETRIES = 5;
+    static constexpr int PORT_INCREMENT = 10;
 };
 
 } // namespace swarm

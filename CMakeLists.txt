@@ -10,9 +10,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O2")
 
 # Find required packages
 find_package(Threads REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(ZMQ REQUIRED libzmq)
 
 # Include directories
 include_directories(include)
+include_directories(${ZMQ_INCLUDE_DIRS})
 
 # Core library
 add_library(swarm-core
@@ -21,6 +24,8 @@ add_library(swarm-core
 )
 
 target_include_directories(swarm-core PUBLIC include)
+target_link_libraries(swarm-core ${ZMQ_LIBRARIES})
+target_compile_options(swarm-core PUBLIC ${ZMQ_CFLAGS_OTHER})
 
 # Individual module libraries
 add_library(swarm-http-server
@@ -76,10 +81,17 @@ find_package(GTest QUIET)
 if(GTest_FOUND)
     enable_testing()
     add_executable(test-swarm-app tests/test_main.cpp)
-    target_link_libraries(test-swarm-app GTest::gtest GTest::gtest_main GTest::gmock Threads::Threads)
+    target_link_libraries(test-swarm-app swarm-core GTest::gtest GTest::gtest_main GTest::gmock Threads::Threads)
+    target_include_directories(test-swarm-app PUBLIC include)
     
-    # Add test
+    # Add ZeroMQ message bus test
+add_executable(test-zeromq-message-bus tests/test_zeromq_message_bus.cpp)
+target_link_libraries(test-zeromq-message-bus swarm-core GTest::gtest GTest::gtest_main GTest::gmock Threads::Threads)
+target_include_directories(test-zeromq-message-bus PUBLIC include)
+    
+    # Add tests
     add_test(NAME UnitTests COMMAND test-swarm-app)
+    add_test(NAME ZeroMQMessageBusTests COMMAND test-zeromq-message-bus)
 endif()
 
 # Installation
