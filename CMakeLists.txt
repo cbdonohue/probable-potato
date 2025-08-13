@@ -89,21 +89,91 @@ target_link_libraries(core-standalone
 # Find Google Test (optional for production builds)
 find_package(GTest QUIET)
 
+# Find CURL for HTTP testing
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(CURL REQUIRED libcurl)
+
 # Tests (only if GTest is available)
 if(GTest_FOUND)
     enable_testing()
+    
+    # Main unit tests
     add_executable(test-swarm-app tests/test_main.cpp)
     target_link_libraries(test-swarm-app swarm-core GTest::gtest GTest::gtest_main GTest::gmock Threads::Threads ${ZMQ_LIBRARIES})
     target_include_directories(test-swarm-app PUBLIC include)
     
-    # Add ZeroMQ message bus test
-add_executable(test-zeromq-message-bus tests/test_zeromq_message_bus.cpp)
-target_link_libraries(test-zeromq-message-bus swarm-core GTest::gtest GTest::gtest_main GTest::gmock Threads::Threads ${ZMQ_LIBRARIES})
-target_include_directories(test-zeromq-message-bus PUBLIC include)
+    # ZeroMQ message bus test
+    add_executable(test-zeromq-message-bus tests/test_zeromq_message_bus.cpp)
+    target_link_libraries(test-zeromq-message-bus swarm-core GTest::gtest GTest::gtest_main GTest::gmock Threads::Threads ${ZMQ_LIBRARIES})
+    target_include_directories(test-zeromq-message-bus PUBLIC include)
     
-    # Add tests
+    # Standalone applications test
+    add_executable(test-standalone-apps tests/test_standalone_apps.cpp)
+    target_link_libraries(test-standalone-apps 
+        swarm-core 
+        swarm-http-server 
+        swarm-health-monitor 
+        GTest::gtest 
+        GTest::gtest_main 
+        GTest::gmock 
+        Threads::Threads 
+        ${ZMQ_LIBRARIES}
+    )
+    target_include_directories(test-standalone-apps PUBLIC include)
+    target_link_libraries(test-standalone-apps ${CURL_LIBRARIES})
+    target_include_directories(test-standalone-apps PUBLIC ${CURL_INCLUDE_DIRS})
+    target_compile_options(test-standalone-apps PUBLIC ${CURL_CFLAGS_OTHER})
+    
+    # Individual standalone applications test
+    add_executable(test-individual-standalone tests/test_individual_standalone.cpp)
+    target_link_libraries(test-individual-standalone 
+        swarm-core 
+        swarm-http-server 
+        swarm-health-monitor 
+        GTest::gtest 
+        GTest::gtest_main 
+        GTest::gmock 
+        Threads::Threads 
+        ${ZMQ_LIBRARIES}
+    )
+    target_include_directories(test-individual-standalone PUBLIC include)
+    target_link_libraries(test-individual-standalone ${CURL_LIBRARIES})
+    target_include_directories(test-individual-standalone PUBLIC ${CURL_INCLUDE_DIRS})
+    target_compile_options(test-individual-standalone PUBLIC ${CURL_CFLAGS_OTHER})
+    
+    # Swarm integration test
+    add_executable(test-swarm-integration tests/test_swarm_integration.cpp)
+    target_link_libraries(test-swarm-integration 
+        swarm-core 
+        swarm-http-server 
+        swarm-health-monitor 
+        GTest::gtest 
+        GTest::gtest_main 
+        GTest::gmock 
+        Threads::Threads 
+        ${ZMQ_LIBRARIES}
+    )
+    target_include_directories(test-swarm-integration PUBLIC include)
+    target_link_libraries(test-swarm-integration ${CURL_LIBRARIES})
+    target_include_directories(test-swarm-integration PUBLIC ${CURL_INCLUDE_DIRS})
+    target_compile_options(test-swarm-integration PUBLIC ${CURL_CFLAGS_OTHER})
+    
+    # Add all tests
     add_test(NAME UnitTests COMMAND test-swarm-app)
     add_test(NAME ZeroMQMessageBusTests COMMAND test-zeromq-message-bus)
+    add_test(NAME StandaloneAppsTests COMMAND test-standalone-apps)
+    add_test(NAME IndividualStandaloneTests COMMAND test-individual-standalone)
+    add_test(NAME SwarmIntegrationTests COMMAND test-swarm-integration)
+    
+    # Test suite for all standalone and swarm tests
+    add_test(NAME StandaloneAndSwarmTests 
+        COMMAND ${CMAKE_CTEST_COMMAND} 
+        --output-on-failure 
+        -R "(StandaloneAppsTests|IndividualStandaloneTests|SwarmIntegrationTests)"
+    )
+    
+else()
+    message(WARNING "Google Test not found. Unit tests will not be built.")
 endif()
 
 # Installation
