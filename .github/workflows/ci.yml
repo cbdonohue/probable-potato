@@ -17,11 +17,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up C++ environment
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '6.0.x'
-
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -41,14 +36,14 @@ jobs:
         ./test-swarm-app --gtest_output=xml:test-results.xml
 
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results
         path: build/test-results.xml
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-artifacts
         path: build/swarm-app
