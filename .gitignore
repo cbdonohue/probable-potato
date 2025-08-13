@@ -8,6 +8,14 @@ build/
 *.out
 *.app
 
+# Doxygen generated documentation
+docs/doxygen/
+*.tag
+*.md5
+*.map
+*.dot
+*.gv
+
 # CMake
 CMakeCache.txt
 CMakeFiles/
