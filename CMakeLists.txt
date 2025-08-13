@@ -20,10 +20,13 @@ add_executable(swarm-app src/main.cpp)
 # Link libraries
 target_link_libraries(swarm-app Threads::Threads)
 
+# Find Google Test
+find_package(GTest REQUIRED)
+
 # Tests
 enable_testing()
 add_executable(test-swarm-app tests/test_main.cpp)
-target_link_libraries(test-swarm-app Threads::Threads)
+target_link_libraries(test-swarm-app GTest::gtest GTest::gtest_main GTest::gmock Threads::Threads)
 
 # Add test
 add_test(NAME UnitTests COMMAND test-swarm-app)

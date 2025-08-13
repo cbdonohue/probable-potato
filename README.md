@@ -10,7 +10,7 @@ A minimal, high-performance C++ HTTP server application designed for Docker Swar
 
 - 🚀 **High Performance**: Native C++ implementation
 - 🐳 **Docker Swarm Ready**: Optimized for container orchestration
-- 🧪 **Well Tested**: Comprehensive unit test suite (31 tests)
+- 🧪 **Well Tested**: Comprehensive unit test suite using Google Test (20 tests)
 - 🔧 **Multiple Build Systems**: Support for both Make and CMake
 - 📦 **Production Ready**: Multi-stage Docker builds
 - 🔄 **Auto Recovery**: Automatic restart on failure
@@ -33,6 +33,12 @@ make
 # Run tests
 make test
 ./test-swarm-app
+
+# Or run tests with Make
+make run-tests
+
+# Or build and test in one command
+make check
 
 # Clean build artifacts
 make clean
