@@ -2,7 +2,7 @@ FROM gcc:11 as builder
 
 WORKDIR /app
 
-COPY main.cpp Makefile ./
+COPY . .
 RUN make clean && make
 
 FROM debian:bullseye-slim

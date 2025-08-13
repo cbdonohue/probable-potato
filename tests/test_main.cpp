@@ -13,7 +13,7 @@
 #include <chrono>
 
 // Include the server header
-#include "server.h"
+#include "../include/server.h"
 
 class TestFramework {
 private:

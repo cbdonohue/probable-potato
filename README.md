@@ -1,23 +1,61 @@
-# Minimal Docker Swarm Application
+# SwarmApp
 
-A simple C++ HTTP server application designed to run on Docker Swarm.
+A minimal, high-performance C++ HTTP server application designed for Docker Swarm deployment.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![C++](https://img.shields.io/badge/C%2B%2B-11-blue.svg)](https://isocpp.org/)
+[![CMake](https://img.shields.io/badge/CMake-3.10+-green.svg)](https://cmake.org/)
+
+## Features
+
+- 🚀 **High Performance**: Native C++ implementation
+- 🐳 **Docker Swarm Ready**: Optimized for container orchestration
+- 🧪 **Well Tested**: Comprehensive unit test suite (31 tests)
+- 🔧 **Multiple Build Systems**: Support for both Make and CMake
+- 📦 **Production Ready**: Multi-stage Docker builds
+- 🔄 **Auto Recovery**: Automatic restart on failure
+- 📊 **Health Monitoring**: Built-in health check endpoint
 
 ## Quick Start
 
-### Local Development
-```bash
-# Build and run locally
-docker-compose up --build
-```
+### Prerequisites
+- C++11 compatible compiler (GCC, Clang, or MSVC)
+- CMake 3.10+ (optional, for CMake builds)
+- Docker (for containerized deployment)
 
-### Running Tests
+### Building from Source
+
+#### Using Make (Recommended)
 ```bash
-# Compile and run unit tests
+# Build the application
+make
+
+# Run tests
 make test
 ./test-swarm-app
 
 # Clean build artifacts
 make clean
+```
+
+#### Using CMake
+```bash
+# Create build directory
+mkdir build && cd build
+
+# Configure and build
+cmake ..
+make
+
+# Run tests
+make test
+```
+
+### Local Development
+```bash
+# Build and run locally using Docker Compose
+cd docker
+docker-compose up --build
 ```
 
 ### Docker Swarm Deployment
@@ -29,6 +67,7 @@ docker swarm init
 
 2. **Build the application image**:
 ```bash
+cd docker
 docker build -t swarm-app:latest .
 ```
 
@@ -70,17 +109,39 @@ docker stack rm swarm-app
 docker swarm leave --force
 ```
 
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a list of changes and releases.
+
 ## Application Endpoints
 
 - `GET /` - Main endpoint returning hostname and version
 - `GET /health` - Health check endpoint
 
-## Features
+## Project Structure
 
-- Simple C++ HTTP server application
-- Comprehensive unit test suite
-- Docker Swarm ready with overlay networking
-- Health check endpoint
-- Rolling updates support
-- Automatic restart on failure
-- Multi-stage Docker build for optimized image size
+```
+swarm-app/
+├── src/                    # Source files
+│   └── main.cpp           # Main application entry point
+├── include/               # Header files
+│   └── server.h           # HTTP server class definition
+├── tests/                 # Test files
+│   └── test_main.cpp      # Unit test suite
+├── docker/                # Docker configurations
+│   ├── Dockerfile         # Container build configuration
+│   ├── docker-compose.yml # Local development
+│   └── docker-compose.swarm.yml # Swarm deployment
+├── docs/                  # Documentation (future)
+├── CMakeLists.txt        # CMake build configuration
+├── Makefile              # Make build configuration
+└── README.md             # This file
+```
