@@ -32,6 +32,23 @@ add_executable(swarm-app
 # Link libraries
 target_link_libraries(swarm-app swarm-core Threads::Threads)
 
+# Individual module executables
+add_executable(http-server-module
+    src/modules/http-server/http_server_standalone.cpp
+    src/modules/http-server/http_server_module.cpp
+    src/core/message_bus.cpp
+    src/core/module_manager.cpp
+)
+target_link_libraries(http-server-module Threads::Threads)
+
+add_executable(health-monitor-module
+    src/modules/health-monitor/health_monitor_standalone.cpp
+    src/modules/health-monitor/health_monitor_module.cpp
+    src/core/message_bus.cpp
+    src/core/module_manager.cpp
+)
+target_link_libraries(health-monitor-module Threads::Threads)
+
 # Find Google Test (optional for production builds)
 find_package(GTest QUIET)
 

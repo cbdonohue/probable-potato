@@ -81,6 +81,41 @@ make
 make test
 ```
 
+### Building Individual Modules
+
+You can build and run individual modules independently:
+
+```bash
+# List available modules
+./scripts/build-modules.sh list
+
+# Build a specific module
+./scripts/build-modules.sh build http-server
+./scripts/build-modules.sh build health-monitor
+
+# Build all modules
+./scripts/build-modules.sh build all
+
+# Run a specific module
+./scripts/build-modules.sh run http-server
+./scripts/build-modules.sh run health-monitor
+
+# Clean build directory
+./scripts/build-modules.sh clean
+```
+
+#### Available Modules
+
+- **http-server-module**: Standalone HTTP server with endpoints
+  - `GET /` - Main endpoint
+  - `GET /health` - Health check
+  - `GET /status` - Server status
+
+- **health-monitor-module**: Standalone health monitoring service
+  - Monitors HTTP and TCP endpoints
+  - Configurable check intervals
+  - Real-time status reporting
+
 ### Local Development
 ```bash
 # Build and run locally using Docker Compose
