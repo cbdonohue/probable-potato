@@ -103,3 +103,30 @@ set_target_properties(swarm-app PROPERTIES
     VERSION ${PROJECT_VERSION}
     OUTPUT_NAME swarm-app
 )
+
+# Doxygen documentation
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
+    set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+    
+    # Configure the Doxyfile with correct paths
+    configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+    
+    # Create output directory
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen)
+    
+    # Add the target
+    add_custom_target(docs ALL
+        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM)
+    
+    # Install documentation
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs/doxygen/html
+            DESTINATION share/doc/swarmapp
+            OPTIONAL)
+else()
+    message(WARNING "Doxygen not found. Documentation will not be generated.")
+endif()

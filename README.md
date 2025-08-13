@@ -56,6 +56,40 @@ make test
 ./test-zeromq-message-bus
 ```
 
+### Documentation
+
+SwarmApp includes comprehensive API documentation generated with Doxygen.
+
+#### Generating Documentation
+
+```bash
+# Using the provided script (recommended)
+./scripts/generate_docs.sh
+
+# Using CMake
+mkdir -p build && cd build
+cmake ..
+make docs
+
+# Using Doxygen directly
+doxygen Doxyfile
+```
+
+#### Viewing Documentation
+
+After generation, open `docs/doxygen/html/index.html` in your web browser.
+
+#### Documentation Features
+
+- **API Reference**: Complete documentation of all classes and methods
+- **Code Examples**: Usage examples from the source code
+- **Class Diagrams**: Visual representation of class relationships
+- **Call Graphs**: Function call relationships and dependencies
+- **Search Functionality**: Full-text search across all documentation
+- **Cross-references**: Links between related classes and methods
+
+For more information about the documentation, see [docs/README.md](docs/README.md).
+
 ## 🧩 Modular Architecture
 
 SwarmApp is built with a modular architecture that allows components to exist independently while enabling seamless interaction:
