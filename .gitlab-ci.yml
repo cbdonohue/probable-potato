@@ -1,0 +1,140 @@
+# GitLab CI/CD Pipeline for SwarmApp
+# A modular C++ application with Docker Swarm deployment
+
+stages:
+  - build
+  - test
+  - package
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  REGISTRY: $CI_REGISTRY
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+
+# Cache dependencies between jobs
+cache:
+  paths:
+    - build/
+    - .cache/
+
+# Build stage - Compile the application
+build:
+  stage: build
+  image: gcc:11
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq cmake
+  script:
+    - mkdir -p build
+    - cd build
+    - cmake ..
+    - make -j$(nproc)
+  artifacts:
+    paths:
+      - build/swarm-app
+    expire_in: 1 hour
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Test stage - Run unit tests
+test:
+  stage: test
+  image: gcc:11
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq cmake libgtest-dev libgmock-dev
+  script:
+    - mkdir -p build
+    - cd build
+    - cmake ..
+    - make test-swarm-app
+    - ./test-swarm-app --gtest_output=xml:test-results.xml
+  artifacts:
+    reports:
+      junit: build/test-results.xml
+    paths:
+      - build/test-results.xml
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Package stage - Build Docker image
+package:
+  stage: package
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -f docker/Dockerfile -t $REGISTRY/$CI_PROJECT_PATH:$IMAGE_TAG .
+    - docker tag $REGISTRY/$CI_PROJECT_PATH:$IMAGE_TAG $REGISTRY/$CI_PROJECT_PATH:latest
+    - docker push $REGISTRY/$CI_PROJECT_PATH:$IMAGE_TAG
+    - docker push $REGISTRY/$CI_PROJECT_PATH:latest
+  only:
+    - main
+    - develop
+    - tags
+
+# Deploy to staging environment
+deploy:staging:
+  stage: deploy
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $REGISTRY/$CI_PROJECT_PATH:$IMAGE_TAG
+    - echo "Deploying to staging environment..."
+    # Add your staging deployment commands here
+    # Example: docker stack deploy -c docker/docker-compose.swarm.yml swarm-app-staging
+  environment:
+    name: staging
+    url: https://staging.swarmapp.example.com
+  only:
+    - develop
+
+# Deploy to production environment
+deploy:production:
+  stage: deploy
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $REGISTRY/$CI_PROJECT_PATH:$IMAGE_TAG
+    - echo "Deploying to production environment..."
+    # Add your production deployment commands here
+    # Example: docker stack deploy -c docker/docker-compose.swarm.yml swarm-app
+  environment:
+    name: production
+    url: https://swarmapp.example.com
+  when: manual
+  only:
+    - main
+    - tags
+
+# Security scan (optional)
+security_scan:
+  stage: test
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker pull $REGISTRY/$CI_PROJECT_PATH:$IMAGE_TAG
+    - echo "Running security scan..."
+    # Add security scanning tools here
+    # Example: trivy image $REGISTRY/$CI_PROJECT_PATH:$IMAGE_TAG
+  allow_failure: true
+  only:
+    - main
+    - develop
+    - merge_requests

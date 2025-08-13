@@ -45,6 +45,7 @@ SwarmApp is built with a modular architecture that allows components to exist in
 - C++17 compatible compiler (GCC, Clang, or MSVC)
 - CMake 3.10+ (optional, for CMake builds)
 - Docker (for containerized deployment)
+- GitLab (for CI/CD pipeline)
 
 ### Building from Source
 
@@ -114,6 +115,50 @@ docker stack ps swarm-app
 5. **Access the application**:
 ```bash
 curl http://localhost:8080
+```
+
+## 🔄 CI/CD Pipeline
+
+SwarmApp includes a complete GitLab CI/CD pipeline for automated build, test, and deployment:
+
+### Pipeline Features
+- **Automated Build**: Compiles C++ application using CMake
+- **Unit Testing**: Runs Google Test suite with JUnit reports
+- **Docker Packaging**: Builds and pushes container images
+- **Staging Deployment**: Automatic deployment to staging environment
+- **Production Deployment**: Manual approval deployment to production
+- **Security Scanning**: Optional security vulnerability scanning
+
+### Quick Setup
+1. Push code to GitLab repository
+2. Configure GitLab variables (if needed)
+3. Pipeline runs automatically on commits and merge requests
+
+### Pipeline Files
+- `.gitlab-ci.yml` - Full pipeline with deployment stages
+- `.gitlab-ci-simple.yml` - Simple pipeline for development
+- `scripts/deploy.sh` - Deployment script for Docker Swarm
+
+For detailed CI/CD documentation, see [docs/CI_CD.md](docs/CI_CD.md).
+
+## 🚀 Deployment
+
+### Using the Deployment Script
+```bash
+# Deploy to production
+./scripts/deploy.sh production swarm-app
+
+# Deploy to staging
+./scripts/deploy.sh staging swarm-app-staging
+
+# Check deployment status
+./scripts/deploy.sh status
+
+# Perform health check
+./scripts/deploy.sh health
+
+# Rollback deployment
+./scripts/deploy.sh rollback
 ```
 
 ## Management Commands
