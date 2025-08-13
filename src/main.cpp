@@ -1,5 +1,6 @@
 #include "../include/core/module_manager.h"
 #include "../include/modules/http_server_module.h"
+#include "../include/modules/health_monitor_module.h"
 #include <iostream>
 #include <signal.h>
 #include <unistd.h>
@@ -17,7 +18,7 @@ void signalHandler(int signum) {
 }
 
 int main() {
-    std::cout << "🚀 Starting SwarmApp HTTP Server" << std::endl;
+    std::cout << "🚀 Starting SwarmApp with Multiple Modules" << std::endl;
     
     // Set up signal handling
     signal(SIGINT, signalHandler);
@@ -33,14 +34,26 @@ int main() {
             return std::make_unique<HttpServerModule>();
         });
         
-        std::cout << "📦 Registered modules: http-server" << std::endl;
+        moduleManager.registerModule("health-monitor", []() {
+            return std::make_unique<HealthMonitorModule>();
+        });
         
-        // Load and configure modules
+        std::cout << "📦 Registered modules: http-server, health-monitor" << std::endl;
+        
+        // Load and configure HTTP server module
         std::map<std::string, std::string> httpConfig = {
-            {"port", "8080"},
+            {"port", "8082"},
             {"host", "0.0.0.0"},
             {"max_connections", "100"},
             {"enable_cors", "true"}
+        };
+        
+        // Load and configure health monitor module
+        std::map<std::string, std::string> healthConfig = {
+            {"default_timeout_ms", "5000"},
+            {"default_interval_ms", "10000"},
+            {"max_failures", "3"},
+            {"enable_notifications", "true"}
         };
         
         // Load modules
@@ -49,16 +62,37 @@ int main() {
             return 1;
         }
         
+        if (!moduleManager.loadModule("health-monitor", healthConfig)) {
+            std::cerr << "❌ Failed to load health-monitor module" << std::endl;
+            return 1;
+        }
+        
+        // Add health checks to monitor the HTTP server
+        auto healthMonitor = moduleManager.getModule("health-monitor");
+        if (auto* hm = dynamic_cast<HealthMonitorModule*>(healthMonitor)) {
+            HealthCheckConfig httpCheck = {
+                "http-server", "http", "http://localhost:8082/health", 5000, 10000, 3
+            };
+            hm->addHealthCheck(httpCheck);
+            
+            HealthCheckConfig mainCheck = {
+                "main-endpoint", "http", "http://localhost:8082/", 5000, 15000, 3
+            };
+            hm->addHealthCheck(mainCheck);
+            
+            std::cout << "📋 Added health checks for HTTP server" << std::endl;
+        }
+        
         std::cout << "✅ Modules loaded successfully" << std::endl;
         
         // Start all modules
         moduleManager.startAllModules();
         
-        std::cout << "🎯 HTTP Server is running..." << std::endl;
+        std::cout << "🎯 Application is running..." << std::endl;
         std::cout << "📊 Available endpoints:" << std::endl;
-        std::cout << "   GET http://localhost:8080/ - Main endpoint" << std::endl;
-        std::cout << "   GET http://localhost:8080/health - Health check" << std::endl;
-        std::cout << "   GET http://localhost:8080/status - Module status" << std::endl;
+        std::cout << "   GET http://localhost:8082/ - Main endpoint" << std::endl;
+        std::cout << "   GET http://localhost:8082/health - Health check" << std::endl;
+        std::cout << "   GET http://localhost:8082/status - Module status" << std::endl;
         std::cout << "🔧 Press Ctrl+C to stop" << std::endl;
         
         // Keep the application running
