@@ -119,9 +119,33 @@ curl http://localhost:8080
 
 ## 🔄 CI/CD Pipeline
 
-SwarmApp includes a complete GitLab CI/CD pipeline for automated build, test, and deployment:
+SwarmApp includes CI/CD configurations for both **GitHub Actions** and **GitLab CI/CD**.
 
-### Pipeline Features
+### GitHub Actions (Recommended)
+
+Automated build, test, and deployment using GitHub's native CI/CD.
+
+#### Pipeline Features
+- **Automated Build**: Compiles C++ application using CMake
+- **Unit Testing**: Runs Google Test suite with JUnit reports
+- **Docker Packaging**: Builds and pushes to GitHub Container Registry
+- **Staging Deployment**: Automatic deployment to staging environment
+- **Production Deployment**: Manual approval deployment to production
+
+#### Quick Setup
+1. **Repository**: Your code is already in GitHub
+2. **Workflows**: Automatically triggered on pushes to `main` and `develop`
+3. **Registry**: Uses GitHub Container Registry (ghcr.io)
+
+#### Pipeline Files
+- `.github/workflows/ci.yml` - Full CI/CD pipeline with deployment
+- `.github/workflows/ci-simple.yml` - Simple build and test pipeline
+
+### GitLab CI/CD (Alternative)
+
+For teams using GitLab, the project includes GitLab CI/CD configuration.
+
+#### Pipeline Features
 - **Automated Build**: Compiles C++ application using CMake
 - **Unit Testing**: Runs Google Test suite with JUnit reports
 - **Docker Packaging**: Builds and pushes container images
@@ -129,17 +153,17 @@ SwarmApp includes a complete GitLab CI/CD pipeline for automated build, test, an
 - **Production Deployment**: Manual approval deployment to production
 - **Security Scanning**: Optional security vulnerability scanning
 
-### Quick Setup
+#### Quick Setup
 1. Push code to GitLab repository
 2. Configure GitLab variables (if needed)
 3. Pipeline runs automatically on commits and merge requests
 
-### Pipeline Files
+#### Pipeline Files
 - `.gitlab-ci.yml` - Full pipeline with deployment stages
 - `.gitlab-ci-simple.yml` - Simple pipeline for development
 - `scripts/deploy.sh` - Deployment script for Docker Swarm
 
-For detailed CI/CD documentation, see [docs/CI_CD.md](docs/CI_CD.md).
+For detailed GitLab CI/CD documentation, see [docs/CI_CD.md](docs/CI_CD.md).
 
 ## 🚀 Deployment
 
