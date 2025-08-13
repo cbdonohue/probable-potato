@@ -1,6 +1,6 @@
 # Minimal Docker Swarm Application
 
-A simple Flask web application designed to run on Docker Swarm.
+A simple C++ HTTP server application designed to run on Docker Swarm.
 
 ## Quick Start
 
@@ -67,8 +67,9 @@ docker swarm leave --force
 
 ## Features
 
-- Simple Flask web application
+- Simple C++ HTTP server application
 - Docker Swarm ready with overlay networking
 - Health check endpoint
 - Rolling updates support
 - Automatic restart on failure
+- Multi-stage Docker build for optimized image size

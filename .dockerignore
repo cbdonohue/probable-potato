@@ -27,3 +27,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# C++ build artifacts
+swarm-app
+*.o
+*.a
+*.so
