@@ -63,6 +63,7 @@ add_executable(http-server-standalone
 target_link_libraries(http-server-standalone 
     swarm-http-server 
     Threads::Threads
+    ${ZMQ_LIBRARIES}
 )
 
 add_executable(health-monitor-standalone
@@ -72,6 +73,7 @@ add_executable(health-monitor-standalone
 target_link_libraries(health-monitor-standalone 
     swarm-health-monitor 
     Threads::Threads
+    ${ZMQ_LIBRARIES}
 )
 
 add_executable(core-standalone
@@ -81,6 +83,7 @@ add_executable(core-standalone
 target_link_libraries(core-standalone 
     swarm-core 
     Threads::Threads
+    ${ZMQ_LIBRARIES}
 )
 
 # Find Google Test (optional for production builds)
@@ -90,12 +93,12 @@ find_package(GTest QUIET)
 if(GTest_FOUND)
     enable_testing()
     add_executable(test-swarm-app tests/test_main.cpp)
-    target_link_libraries(test-swarm-app swarm-core GTest::gtest GTest::gtest_main GTest::gmock Threads::Threads)
+    target_link_libraries(test-swarm-app swarm-core GTest::gtest GTest::gtest_main GTest::gmock Threads::Threads ${ZMQ_LIBRARIES})
     target_include_directories(test-swarm-app PUBLIC include)
     
     # Add ZeroMQ message bus test
 add_executable(test-zeromq-message-bus tests/test_zeromq_message_bus.cpp)
-target_link_libraries(test-zeromq-message-bus swarm-core GTest::gtest GTest::gtest_main GTest::gmock Threads::Threads)
+target_link_libraries(test-zeromq-message-bus swarm-core GTest::gtest GTest::gtest_main GTest::gmock Threads::Threads ${ZMQ_LIBRARIES})
 target_include_directories(test-zeromq-message-bus PUBLIC include)
     
     # Add tests
