@@ -48,18 +48,18 @@ int main() {
 
         // Add some example health checks
         HealthCheckConfig httpCheck = {
-            "http-server", "http", "http://localhost:8080/health", 5000, 10000, 3
+            "http-server", "http", "http://localhost:8081/health", 5000, 10000, 3
         };
         monitor->addHealthCheck(httpCheck);
 
         HealthCheckConfig tcpCheck = {
-            "tcp-server", "tcp", "localhost:8080", 5000, 15000, 3
+            "tcp-server", "tcp", "localhost:8081", 5000, 15000, 3
         };
         monitor->addHealthCheck(tcpCheck);
 
         std::cout << "📋 Added health checks for:" << std::endl;
-        std::cout << "   - HTTP server (localhost:8080/health)" << std::endl;
-        std::cout << "   - TCP server (localhost:8080)" << std::endl;
+        std::cout << "   - HTTP server (localhost:8081/health)" << std::endl;
+        std::cout << "   - TCP server (localhost:8081)" << std::endl;
 
         // Start the monitor
         monitor->start();

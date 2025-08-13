@@ -217,6 +217,34 @@ HealthCheckResult HealthMonitorModule::performHealthCheck(const HealthCheckConfi
 }
 
 HealthCheckResult HealthMonitorModule::performHttpHealthCheck(const HealthCheckConfig& config) {
+    // Parse URL to extract host and port
+    std::string endpoint = config.endpoint;
+    std::string host = "127.0.0.1";
+    int port = 8081; // Default port for standalone
+    
+    // Simple URL parsing
+    if (endpoint.find("http://") == 0) {
+        endpoint = endpoint.substr(7); // Remove "http://"
+    }
+    
+    size_t colonPos = endpoint.find(':');
+    if (colonPos != std::string::npos) {
+        host = endpoint.substr(0, colonPos);
+        size_t slashPos = endpoint.find('/', colonPos);
+        if (slashPos != std::string::npos) {
+            port = std::stoi(endpoint.substr(colonPos + 1, slashPos - colonPos - 1));
+        } else {
+            port = std::stoi(endpoint.substr(colonPos + 1));
+        }
+    } else {
+        size_t slashPos = endpoint.find('/');
+        if (slashPos != std::string::npos) {
+            host = endpoint.substr(0, slashPos);
+        } else {
+            host = endpoint;
+        }
+    }
+    
     // Simple HTTP health check implementation
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
@@ -227,28 +255,68 @@ HealthCheckResult HealthMonitorModule::performHttpHealthCheck(const HealthCheckC
     
     struct sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(80); // Default HTTP port
+    serv_addr.sin_port = htons(port);
     
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+    // Convert hostname to IP address if needed
+    std::string ipAddress = host;
+    if (host == "localhost") {
+        ipAddress = "127.0.0.1";
+    }
+    
+    if (inet_pton(AF_INET, ipAddress.c_str(), &serv_addr.sin_addr) <= 0) {
         close(sock);
         return {config.moduleName, false, "Invalid address", 
                 std::chrono::system_clock::now(), std::chrono::milliseconds(0), 
-                "Invalid address"};
+                "Invalid address: " + host + " (resolved to " + ipAddress + ")"};
     }
     
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         close(sock);
         return {config.moduleName, false, "Connection failed", 
                 std::chrono::system_clock::now(), std::chrono::milliseconds(0), 
-                "Connection failed"};
+                "Connection failed to " + host + ":" + std::to_string(port)};
     }
     
+    // Send a simple HTTP GET request
+    std::string request = "GET /health HTTP/1.1\r\nHost: " + host + ":" + std::to_string(port) + "\r\nConnection: close\r\n\r\n";
+    
+    if (send(sock, request.c_str(), request.length(), 0) < 0) {
+        close(sock);
+        return {config.moduleName, false, "HTTP request failed", 
+                std::chrono::system_clock::now(), std::chrono::milliseconds(0), 
+                "Failed to send HTTP request"};
+    }
+    
+    // Read response (just check if we get any response)
+    char buffer[1024];
+    int bytesRead = recv(sock, buffer, sizeof(buffer) - 1, 0);
     close(sock);
-    return {config.moduleName, true, "Healthy", 
-            std::chrono::system_clock::now(), std::chrono::milliseconds(0), ""};
+    
+    if (bytesRead > 0) {
+        return {config.moduleName, true, "Healthy", 
+                std::chrono::system_clock::now(), std::chrono::milliseconds(0), ""};
+    } else {
+        return {config.moduleName, false, "No response", 
+                std::chrono::system_clock::now(), std::chrono::milliseconds(0), 
+                "No HTTP response received"};
+    }
 }
 
 HealthCheckResult HealthMonitorModule::performTcpHealthCheck(const HealthCheckConfig& config) {
+    // Parse endpoint to extract host and port
+    std::string endpoint = config.endpoint;
+    std::string host = "127.0.0.1";
+    int port = 8081; // Default port for standalone
+    
+    // Simple endpoint parsing
+    size_t colonPos = endpoint.find(':');
+    if (colonPos != std::string::npos) {
+        host = endpoint.substr(0, colonPos);
+        port = std::stoi(endpoint.substr(colonPos + 1));
+    } else {
+        host = endpoint;
+    }
+    
     // Simple TCP health check implementation
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
@@ -259,20 +327,26 @@ HealthCheckResult HealthMonitorModule::performTcpHealthCheck(const HealthCheckCo
     
     struct sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(5000); // Default port
+    serv_addr.sin_port = htons(port);
     
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+    // Convert hostname to IP address if needed
+    std::string ipAddress = host;
+    if (host == "localhost") {
+        ipAddress = "127.0.0.1";
+    }
+    
+    if (inet_pton(AF_INET, ipAddress.c_str(), &serv_addr.sin_addr) <= 0) {
         close(sock);
         return {config.moduleName, false, "Invalid address", 
                 std::chrono::system_clock::now(), std::chrono::milliseconds(0), 
-                "Invalid address"};
+                "Invalid address: " + host + " (resolved to " + ipAddress + ")"};
     }
     
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         close(sock);
         return {config.moduleName, false, "Connection failed", 
                 std::chrono::system_clock::now(), std::chrono::milliseconds(0), 
-                "Connection failed"};
+                "Connection failed to " + host + ":" + std::to_string(port)};
     }
     
     close(sock);
