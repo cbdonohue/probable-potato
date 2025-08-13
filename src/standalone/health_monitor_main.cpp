@@ -46,45 +46,40 @@ int main() {
 
         std::cout << "✅ Health Monitor module initialized successfully" << std::endl;
 
-        // Add some example health checks
+        // Add health checks for the web service
         HealthCheckConfig httpCheck = {
-            "http-server", "http", "http://localhost:8081/health", 5000, 10000, 3
+            "web-service", "http", "http://swarm-app_http-server:8080/health", 5000, 10000, 3
         };
         monitor->addHealthCheck(httpCheck);
 
-        HealthCheckConfig tcpCheck = {
-            "tcp-server", "tcp", "localhost:8081", 5000, 15000, 3
+        HealthCheckConfig mainCheck = {
+            "main-endpoint", "http", "http://swarm-app_http-server:8080/", 5000, 15000, 3
         };
-        monitor->addHealthCheck(tcpCheck);
+        monitor->addHealthCheck(mainCheck);
 
         std::cout << "📋 Added health checks for:" << std::endl;
-        std::cout << "   - HTTP server (localhost:8081/health)" << std::endl;
-        std::cout << "   - TCP server (localhost:8081)" << std::endl;
+        std::cout << "   - Web service health (web:8080/health)" << std::endl;
+        std::cout << "   - Main endpoint (web:8080/)" << std::endl;
 
         // Start the monitor
         monitor->start();
 
-        std::cout << "🎯 Health Monitor is running" << std::endl;
-        std::cout << "📊 Monitoring interval: 10 seconds" << std::endl;
+        std::cout << "🎯 Health Monitor is running..." << std::endl;
         std::cout << "🔧 Press Ctrl+C to stop" << std::endl;
 
-        // Keep the monitor running and show status
+        // Keep the monitor running
         while (monitor->isRunning()) {
             std::this_thread::sleep_for(std::chrono::seconds(5));
             
             // Print status every 5 seconds
-            std::cout << "\n📈 Health Status:" << std::endl;
-            auto allHealth = monitor->getAllHealthStatus();
-            for (const auto& [name, result] : allHealth) {
-                std::cout << "   " << name << ": " 
-                          << (result.healthy ? "✅ Healthy" : "❌ Unhealthy")
-                          << " (" << result.status << ")" << std::endl;
-            }
+            std::cout << "\n📈 Health Monitor Status: " << monitor->getStatus() << std::endl;
             
-            std::cout << "📊 Statistics: " 
-                      << monitor->getTotalChecks() << " total checks, "
-                      << monitor->getFailedChecks() << " failed, "
-                      << "Success rate: " << (monitor->getSuccessRate() * 100) << "%" << std::endl;
+            // Print health status for monitored services
+            auto healthStatus = monitor->getAllHealthStatus();
+            for (const auto& [name, result] : healthStatus) {
+                std::cout << "   " << name << ": " << (result.healthy ? "✅ Healthy" : "❌ Unhealthy") 
+                         << " (" << result.status << ")" << std::endl;
+            }
         }
 
     } catch (const std::exception& e) {

@@ -6,7 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y cmake libzmq3-dev pkg-config && rm -rf /var/lib/apt/lists/*
 
 COPY .. .
-RUN rm -rf build && mkdir build && cd build && cmake .. && make
+RUN rm -rf build && mkdir build && cd build && cmake .. && make http-server-standalone
 
 FROM debian:bullseye-slim
 
@@ -18,8 +18,8 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY --from=builder /app/build/swarm-app .
+COPY --from=builder /app/build/http-server-standalone .
 
 EXPOSE 8080
 
-CMD ["./swarm-app"]
+CMD ["./http-server-standalone"]

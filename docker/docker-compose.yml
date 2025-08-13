@@ -1,13 +1,20 @@
-version: '3.8'
-
 services:
   web:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+    image: swarm-app:latest
     ports:
       - "8080:8080"
     environment:
       - FLASK_ENV=production
-    deploy:
-      replicas: 1
+    restart: unless-stopped
+    networks:
+      - swarm-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  swarm-network:
+    driver: bridge

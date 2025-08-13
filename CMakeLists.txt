@@ -74,6 +74,15 @@ target_link_libraries(health-monitor-standalone
     Threads::Threads
 )
 
+add_executable(core-standalone
+    src/standalone/core_main.cpp
+)
+
+target_link_libraries(core-standalone 
+    swarm-core 
+    Threads::Threads
+)
+
 # Find Google Test (optional for production builds)
 find_package(GTest QUIET)
 

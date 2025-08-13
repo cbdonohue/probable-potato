@@ -1,6 +1,5 @@
 #include "../include/core/module_manager.h"
 #include "../include/modules/http_server_module.h"
-#include "../include/modules/health_monitor_module.h"
 #include <iostream>
 #include <signal.h>
 #include <unistd.h>
@@ -18,7 +17,7 @@ void signalHandler(int signum) {
 }
 
 int main() {
-    std::cout << "🚀 Starting SwarmApp Modular System" << std::endl;
+    std::cout << "🚀 Starting SwarmApp HTTP Server" << std::endl;
     
     // Set up signal handling
     signal(SIGINT, signalHandler);
@@ -34,11 +33,7 @@ int main() {
             return std::make_unique<HttpServerModule>();
         });
         
-        moduleManager.registerModule("health-monitor", []() {
-            return std::make_unique<HealthMonitorModule>();
-        });
-        
-        std::cout << "📦 Registered modules: http-server, health-monitor" << std::endl;
+        std::cout << "📦 Registered modules: http-server" << std::endl;
         
         // Load and configure modules
         std::map<std::string, std::string> httpConfig = {
@@ -48,21 +43,9 @@ int main() {
             {"enable_cors", "true"}
         };
         
-        std::map<std::string, std::string> healthConfig = {
-            {"default_timeout_ms", "5000"},
-            {"default_interval_ms", "30000"},
-            {"max_failures", "3"},
-            {"enable_notifications", "true"}
-        };
-        
         // Load modules
         if (!moduleManager.loadModule("http-server", httpConfig)) {
             std::cerr << "❌ Failed to load http-server module" << std::endl;
-            return 1;
-        }
-        
-        if (!moduleManager.loadModule("health-monitor", healthConfig)) {
-            std::cerr << "❌ Failed to load health-monitor module" << std::endl;
             return 1;
         }
         
@@ -71,7 +54,7 @@ int main() {
         // Start all modules
         moduleManager.startAllModules();
         
-        std::cout << "🎯 All modules started. System is running..." << std::endl;
+        std::cout << "🎯 HTTP Server is running..." << std::endl;
         std::cout << "📊 Available endpoints:" << std::endl;
         std::cout << "   GET http://localhost:8080/ - Main endpoint" << std::endl;
         std::cout << "   GET http://localhost:8080/health - Health check" << std::endl;

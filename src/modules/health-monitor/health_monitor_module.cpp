@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <chrono>
 
 namespace swarm {
@@ -257,10 +258,28 @@ HealthCheckResult HealthMonitorModule::performHttpHealthCheck(const HealthCheckC
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(port);
     
-    // Convert hostname to IP address if needed
+    // Convert hostname to IP address using DNS resolution
     std::string ipAddress = host;
     if (host == "localhost") {
         ipAddress = "127.0.0.1";
+    } else if (host != "127.0.0.1" && host != "localhost") {
+        // Use DNS resolution for hostnames
+        struct hostent *he = gethostbyname(host.c_str());
+        if (he == nullptr) {
+            close(sock);
+            return {config.moduleName, false, "DNS resolution failed", 
+                    std::chrono::system_clock::now(), std::chrono::milliseconds(0), 
+                    "Failed to resolve hostname: " + host};
+        }
+        struct in_addr **addr_list = (struct in_addr **)he->h_addr_list;
+        if (addr_list[0] != nullptr) {
+            ipAddress = inet_ntoa(*addr_list[0]);
+        } else {
+            close(sock);
+            return {config.moduleName, false, "DNS resolution failed", 
+                    std::chrono::system_clock::now(), std::chrono::milliseconds(0), 
+                    "No IP address found for hostname: " + host};
+        }
     }
     
     if (inet_pton(AF_INET, ipAddress.c_str(), &serv_addr.sin_addr) <= 0) {

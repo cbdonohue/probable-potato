@@ -6,20 +6,19 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y cmake libzmq3-dev pkg-config && rm -rf /var/lib/apt/lists/*
 
 COPY .. .
-RUN rm -rf build && mkdir build && cd build && cmake .. && make
+RUN rm -rf build && mkdir build && cd build && cmake .. && make core-standalone
 
 FROM debian:bullseye-slim
 
 RUN apt-get update && apt-get install -y \
     ca-certificates \
-    curl \
     libzmq5 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY --from=builder /app/build/swarm-app .
+COPY --from=builder /app/build/core-standalone .
 
-EXPOSE 8080
+EXPOSE 5555 5556
 
-CMD ["./swarm-app"]
+CMD ["./core-standalone"]

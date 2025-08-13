@@ -22,7 +22,8 @@ void MessageBus::setupZeroMQ() {
         
         // Try to bind publisher socket with port retry logic
         publisher_socket_ = std::make_unique<zmq::socket_t>(*context_, ZMQ_PUB);
-        publisher_socket_->set(zmq::sockopt::linger, 0); // Don't wait on close
+        int linger = 0;
+        publisher_socket_->setsockopt(ZMQ_LINGER, &linger, sizeof(linger)); // Don't wait on close
         
         int pub_port = 5555;
         bool pub_bound = false;
@@ -43,7 +44,8 @@ void MessageBus::setupZeroMQ() {
         
         // Try to bind subscriber socket with port retry logic
         subscriber_socket_ = std::make_unique<zmq::socket_t>(*context_, ZMQ_SUB);
-        subscriber_socket_->set(zmq::sockopt::linger, 0); // Don't wait on close
+        int sub_linger = 0;
+        subscriber_socket_->setsockopt(ZMQ_LINGER, &sub_linger, sizeof(sub_linger)); // Don't wait on close
         
         int sub_port = 5556;
         bool sub_bound = false;

@@ -28,10 +28,12 @@ int main() {
 
         // Configure the server
         std::map<std::string, std::string> config = {
-            {"port", "8081"},  // Use different port for standalone
+            {"port", "8080"},  // Use different port for standalone
             {"host", "0.0.0.0"},
             {"max_connections", "100"},
-            {"enable_cors", "true"}
+            {"enable_cors", "true"},
+            {"zmq_pub_port", "5555"},  // Connect to core service
+            {"zmq_sub_port", "5556"}   // Connect to core service
         };
 
         if (!server->configure(config)) {
@@ -49,16 +51,19 @@ int main() {
         // Start the server
         server->start();
 
-        std::cout << "🎯 HTTP Server is running on port 8081" << std::endl;
+        std::cout << "🎯 HTTP Server is running on port 8080" << std::endl;
         std::cout << "📊 Available endpoints:" << std::endl;
-        std::cout << "   GET http://localhost:8081/ - Main endpoint" << std::endl;
-        std::cout << "   GET http://localhost:8081/health - Health check" << std::endl;
-        std::cout << "   GET http://localhost:8081/status - Server status" << std::endl;
+        std::cout << "   GET http://localhost:8080/ - Main endpoint" << std::endl;
+        std::cout << "   GET http://localhost:8080/health - Health check" << std::endl;
+        std::cout << "   GET http://localhost:8080/status - Server status" << std::endl;
         std::cout << "🔧 Press Ctrl+C to stop" << std::endl;
 
         // Keep the server running
         while (server->isRunning()) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::this_thread::sleep_for(std::chrono::seconds(10));
+            
+            // Print status every 10 seconds
+            std::cout << "\n📈 HTTP Server Status: " << server->getStatus() << std::endl;
         }
 
     } catch (const std::exception& e) {
