@@ -83,20 +83,21 @@ make test
 
 ### Building Individual Modules
 
-You can build and run individual modules independently:
+You can build individual modules as libraries and run them independently:
 
 ```bash
 # List available modules
 ./scripts/build-modules.sh list
 
-# Build a specific module
+# Build specific modules as libraries
+./scripts/build-modules.sh build core
 ./scripts/build-modules.sh build http-server
 ./scripts/build-modules.sh build health-monitor
 
 # Build all modules
 ./scripts/build-modules.sh build all
 
-# Run a specific module
+# Run standalone module executables (for testing)
 ./scripts/build-modules.sh run http-server
 ./scripts/build-modules.sh run health-monitor
 
@@ -106,15 +107,22 @@ You can build and run individual modules independently:
 
 #### Available Modules
 
-- **http-server-module**: Standalone HTTP server with endpoints
+- **swarm-core**: Core library with message bus and module manager
+- **swarm-http-server**: HTTP server library with endpoints
   - `GET /` - Main endpoint
   - `GET /health` - Health check
   - `GET /status` - Server status
-
-- **health-monitor-module**: Standalone health monitoring service
+- **swarm-health-monitor**: Health monitoring library
   - Monitors HTTP and TCP endpoints
   - Configurable check intervals
   - Real-time status reporting
+
+#### Architecture
+
+The application uses a modular library architecture:
+- **Libraries**: `swarm-core`, `swarm-http-server`, `swarm-health-monitor`
+- **Main App**: Links all libraries together
+- **Standalone Executables**: For testing individual modules
 
 ### Local Development
 ```bash

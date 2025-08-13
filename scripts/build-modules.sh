@@ -35,7 +35,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 BUILD_DIR="$PROJECT_ROOT/build"
 
 # Available modules
-MODULES=("http-server" "health-monitor" "all")
+MODULES=("http-server" "health-monitor" "core" "all")
 
 # Build a specific module
 build_module() {
@@ -57,8 +57,10 @@ build_module() {
     # Build the module
     if [ "$module" = "all" ]; then
         make -j$(nproc)
+    elif [ "$module" = "core" ]; then
+        make swarm-core -j$(nproc)
     else
-        make "${module}-module" -j$(nproc)
+        make "swarm-${module}" -j$(nproc)
     fi
     
     log_success "$module module built successfully"
@@ -67,7 +69,7 @@ build_module() {
 # Run a specific module
 run_module() {
     local module=$1
-    local executable="$BUILD_DIR/${module}-module"
+    local executable="$BUILD_DIR/${module}-standalone"
     
     if [ ! -f "$executable" ]; then
         log_error "Module $module not built. Run 'build' first."
@@ -78,7 +80,7 @@ run_module() {
     log_info "Press Ctrl+C to stop"
     
     cd "$BUILD_DIR"
-    ./"${module}-module"
+    ./"${module}-standalone"
 }
 
 # Show available modules
@@ -129,9 +131,9 @@ case "${1:-}" in
             exit 1
         fi
         
-        # Check if module is valid (exclude "all")
-        if [ "$2" = "all" ]; then
-            log_error "Cannot run 'all' module. Please specify a specific module."
+        # Check if module is valid (exclude "all" and "core")
+        if [ "$2" = "all" ] || [ "$2" = "core" ]; then
+            log_error "Cannot run '$2'. Please specify a specific module (http-server or health-monitor)."
             exit 1
         fi
         

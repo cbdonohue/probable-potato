@@ -22,32 +22,52 @@ add_library(swarm-core
 
 target_include_directories(swarm-core PUBLIC include)
 
-# Main executable
+# Individual module libraries
+add_library(swarm-http-server
+    src/modules/http-server/http_server_module.cpp
+)
+
+target_link_libraries(swarm-http-server swarm-core Threads::Threads)
+target_include_directories(swarm-http-server PUBLIC include)
+
+add_library(swarm-health-monitor
+    src/modules/health-monitor/health_monitor_module.cpp
+)
+
+target_link_libraries(swarm-health-monitor swarm-core Threads::Threads)
+target_include_directories(swarm-health-monitor PUBLIC include)
+
+# Main executable (links all modules)
 add_executable(swarm-app 
     src/main.cpp
-    src/modules/http-server/http_server_module.cpp
-    src/modules/health-monitor/health_monitor_module.cpp
 )
 
-# Link libraries
-target_link_libraries(swarm-app swarm-core Threads::Threads)
+# Link all libraries to main executable
+target_link_libraries(swarm-app 
+    swarm-core 
+    swarm-http-server 
+    swarm-health-monitor 
+    Threads::Threads
+)
 
-# Individual module executables
-add_executable(http-server-module
+# Standalone module executables (for testing individual modules)
+add_executable(http-server-standalone
     src/modules/http-server/http_server_standalone.cpp
-    src/modules/http-server/http_server_module.cpp
-    src/core/message_bus.cpp
-    src/core/module_manager.cpp
 )
-target_link_libraries(http-server-module Threads::Threads)
 
-add_executable(health-monitor-module
-    src/modules/health-monitor/health_monitor_standalone.cpp
-    src/modules/health-monitor/health_monitor_module.cpp
-    src/core/message_bus.cpp
-    src/core/module_manager.cpp
+target_link_libraries(http-server-standalone 
+    swarm-http-server 
+    Threads::Threads
 )
-target_link_libraries(health-monitor-module Threads::Threads)
+
+add_executable(health-monitor-standalone
+    src/modules/health-monitor/health_monitor_standalone.cpp
+)
+
+target_link_libraries(health-monitor-standalone 
+    swarm-health-monitor 
+    Threads::Threads
+)
 
 # Find Google Test (optional for production builds)
 find_package(GTest QUIET)
