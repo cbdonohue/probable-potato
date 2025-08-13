@@ -52,7 +52,7 @@ target_link_libraries(swarm-app
 
 # Standalone module executables (for testing individual modules)
 add_executable(http-server-standalone
-    src/modules/http-server/http_server_standalone.cpp
+    src/standalone/http_server_main.cpp
 )
 
 target_link_libraries(http-server-standalone 
@@ -61,7 +61,7 @@ target_link_libraries(http-server-standalone
 )
 
 add_executable(health-monitor-standalone
-    src/modules/health-monitor/health_monitor_standalone.cpp
+    src/standalone/health_monitor_main.cpp
 )
 
 target_link_libraries(health-monitor-standalone 
