@@ -10,6 +10,16 @@ A simple C++ HTTP server application designed to run on Docker Swarm.
 docker-compose up --build
 ```
 
+### Running Tests
+```bash
+# Compile and run unit tests
+make test
+./test-swarm-app
+
+# Clean build artifacts
+make clean
+```
+
 ### Docker Swarm Deployment
 
 1. **Initialize Docker Swarm** (if not already done):
@@ -68,6 +78,7 @@ docker swarm leave --force
 ## Features
 
 - Simple C++ HTTP server application
+- Comprehensive unit test suite
 - Docker Swarm ready with overlay networking
 - Health check endpoint
 - Rolling updates support

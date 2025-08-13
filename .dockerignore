@@ -30,6 +30,7 @@ venv.bak/
 
 # C++ build artifacts
 swarm-app
+test-swarm-app
 *.o
 *.a
 *.so

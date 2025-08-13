@@ -179,3 +179,6 @@ node_modules/
 
 # TernJS port file
 .tern-port
+
+# C++ test executables
+test-swarm-app
