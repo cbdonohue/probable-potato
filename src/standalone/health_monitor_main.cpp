@@ -36,7 +36,7 @@ int main() {
 
         if (!monitor->configure(config)) {
             std::cerr << "❌ Failed to configure Health Monitor module" << std::endl;
-            return 1;f
+            return 1;
         }
 
         if (!monitor->initialize()) {
