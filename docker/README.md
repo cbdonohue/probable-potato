@@ -6,7 +6,6 @@ This directory contains Docker configurations for running SwarmApp in containeri
 
 ### Core Services
 - **core**: ZeroMQ message bus and core functionality
-- **http-server**: Legacy HTTP server (port 8080)
 - **health-monitor**: Health monitoring service (port 8081)
 - **api**: Modern Oat++-based API server (port 8083)
 

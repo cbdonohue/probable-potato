@@ -12,7 +12,7 @@
 
 // Include SwarmApp components
 #include "core/module_manager.h"
-#include "modules/http_server_module.h"
+#include "modules/api_module.h"
 #include "modules/health_monitor_module.h"
 
 using namespace swarm;
@@ -76,9 +76,9 @@ TEST_F(SwarmIntegrationTest, CompleteSwarmSystem) {
     ModuleManager swarmManager;
     
     // Register all swarm modules
-    swarmManager.registerModule("http-server", []() {
-        return std::make_unique<HttpServerModule>();
-    });
+            swarmManager.registerModule("api", []() {
+            return std::make_unique<ApiModule>();
+        });
     
     swarmManager.registerModule("health-monitor", []() {
         return std::make_unique<HealthMonitorModule>();
@@ -94,6 +94,14 @@ TEST_F(SwarmIntegrationTest, CompleteSwarmSystem) {
         {"zmq_sub_port", "5560"}
     };
     
+    // Configure API server module
+    std::map<std::string, std::string> apiConfig = {
+        {"port", "8083"},
+        {"host", "127.0.0.1"},
+        {"max_connections", "100"},
+        {"enable_cors", "true"}
+    };
+    
     std::map<std::string, std::string> healthConfig = {
         {"default_timeout_ms", "3000"},
         {"default_interval_ms", "5000"},
@@ -102,14 +110,14 @@ TEST_F(SwarmIntegrationTest, CompleteSwarmSystem) {
     };
     
     // Load all modules
-    EXPECT_TRUE(swarmManager.loadModule("http-server", httpConfig));
+    EXPECT_TRUE(swarmManager.loadModule("api", apiConfig));
     EXPECT_TRUE(swarmManager.loadModule("health-monitor", healthConfig));
     
     // Start the swarm (but don't actually start to avoid hanging)
     // swarmManager.startAllModules();
     
     // Verify swarm is loaded but not running
-    EXPECT_FALSE(swarmManager.isModuleRunning("http-server"));
+    EXPECT_FALSE(swarmManager.isModuleRunning("api"));
     EXPECT_FALSE(swarmManager.isModuleRunning("health-monitor"));
     
     // Test swarm communication
@@ -142,7 +150,7 @@ TEST_F(SwarmIntegrationTest, CompleteSwarmSystem) {
     // Test swarm status
     auto statuses = swarmManager.getModuleStatuses();
     EXPECT_EQ(statuses.size(), 2);
-    EXPECT_NE(statuses.find("http-server"), statuses.end());
+    EXPECT_NE(statuses.find("api"), statuses.end());
     EXPECT_NE(statuses.find("health-monitor"), statuses.end());
     
     // Stop the swarm
@@ -160,8 +168,8 @@ TEST_F(SwarmIntegrationTest, MultiNodeSwarmCommunication) {
         auto node = std::make_unique<ModuleManager>();
         
         // Register modules for each node
-        node->registerModule("http-server", []() {
-            return std::make_unique<HttpServerModule>();
+        node->registerModule("api", []() {
+            return std::make_unique<ApiModule>();
         });
         
         node->registerModule("health-monitor", []() {
@@ -184,7 +192,7 @@ TEST_F(SwarmIntegrationTest, MultiNodeSwarmCommunication) {
         };
         
         // Load modules
-        EXPECT_TRUE(node->loadModule("http-server", httpConfig));
+        EXPECT_TRUE(node->loadModule("api", apiConfig));
         EXPECT_TRUE(node->loadModule("health-monitor", healthConfig));
         
         // Start node (but don't actually start to avoid hanging)
@@ -225,9 +233,9 @@ TEST_F(SwarmIntegrationTest, SwarmLoadBalancing) {
     ModuleManager loadBalancer;
     
     // Register load balancer modules
-    loadBalancer.registerModule("http-server", []() {
-        return std::make_unique<HttpServerModule>();
-    });
+            loadBalancer.registerModule("api", []() {
+            return std::make_unique<ApiModule>();
+        });
     
     loadBalancer.registerModule("health-monitor", []() {
         return std::make_unique<HealthMonitorModule>();
@@ -251,7 +259,7 @@ TEST_F(SwarmIntegrationTest, SwarmLoadBalancing) {
     };
     
     // Load modules
-    EXPECT_TRUE(loadBalancer.loadModule("http-server", lbConfig));
+            EXPECT_TRUE(loadBalancer.loadModule("api", lbConfig));
     EXPECT_TRUE(loadBalancer.loadModule("health-monitor", healthConfig));
     
     // Start load balancer (but don't actually start to avoid hanging)
@@ -300,9 +308,9 @@ TEST_F(SwarmIntegrationTest, SwarmAutoScaling) {
     ModuleManager autoScalingManager;
     
     // Register scaling modules
-    autoScalingManager.registerModule("http-server", []() {
-        return std::make_unique<HttpServerModule>();
-    });
+            autoScalingManager.registerModule("api", []() {
+            return std::make_unique<ApiModule>();
+        });
     
     autoScalingManager.registerModule("health-monitor", []() {
         return std::make_unique<HealthMonitorModule>();
@@ -329,7 +337,7 @@ TEST_F(SwarmIntegrationTest, SwarmAutoScaling) {
     };
     
     // Load modules
-    EXPECT_TRUE(autoScalingManager.loadModule("http-server", scalingConfig));
+            EXPECT_TRUE(autoScalingManager.loadModule("api", scalingConfig));
     EXPECT_TRUE(autoScalingManager.loadModule("health-monitor", healthConfig));
     
     // Start auto-scaling manager (but don't actually start to avoid hanging)
@@ -388,9 +396,9 @@ TEST_F(SwarmIntegrationTest, SwarmFaultTolerance) {
     ModuleManager faultTolerantManager;
     
     // Register fault-tolerant modules
-    faultTolerantManager.registerModule("http-server", []() {
-        return std::make_unique<HttpServerModule>();
-    });
+            faultTolerantManager.registerModule("api", []() {
+            return std::make_unique<ApiModule>();
+        });
     
     faultTolerantManager.registerModule("health-monitor", []() {
         return std::make_unique<HealthMonitorModule>();
@@ -416,7 +424,7 @@ TEST_F(SwarmIntegrationTest, SwarmFaultTolerance) {
     };
     
     // Load modules
-    EXPECT_TRUE(faultTolerantManager.loadModule("http-server", ftConfig));
+            EXPECT_TRUE(faultTolerantManager.loadModule("api", ftConfig));
     EXPECT_TRUE(faultTolerantManager.loadModule("health-monitor", healthConfig));
     
     // Start fault-tolerant manager
@@ -475,9 +483,9 @@ TEST_F(SwarmIntegrationTest, SwarmPerformanceUnderLoad) {
     ModuleManager performanceManager;
     
     // Register performance modules
-    performanceManager.registerModule("http-server", []() {
-        return std::make_unique<HttpServerModule>();
-    });
+            performanceManager.registerModule("api", []() {
+            return std::make_unique<ApiModule>();
+        });
     
     performanceManager.registerModule("health-monitor", []() {
         return std::make_unique<HealthMonitorModule>();
@@ -501,7 +509,7 @@ TEST_F(SwarmIntegrationTest, SwarmPerformanceUnderLoad) {
     };
     
     // Load modules
-    EXPECT_TRUE(performanceManager.loadModule("http-server", perfConfig));
+            EXPECT_TRUE(performanceManager.loadModule("api", perfConfig));
     EXPECT_TRUE(performanceManager.loadModule("health-monitor", healthConfig));
     
     // Start performance manager
@@ -571,9 +579,9 @@ TEST_F(SwarmIntegrationTest, SwarmSecurity) {
     ModuleManager secureManager;
     
     // Register secure modules
-    secureManager.registerModule("http-server", []() {
-        return std::make_unique<HttpServerModule>();
-    });
+            secureManager.registerModule("api", []() {
+            return std::make_unique<ApiModule>();
+        });
     
     secureManager.registerModule("health-monitor", []() {
         return std::make_unique<HealthMonitorModule>();
@@ -602,7 +610,7 @@ TEST_F(SwarmIntegrationTest, SwarmSecurity) {
     };
     
     // Load modules
-    EXPECT_TRUE(secureManager.loadModule("http-server", securityConfig));
+            EXPECT_TRUE(secureManager.loadModule("api", securityConfig));
     EXPECT_TRUE(secureManager.loadModule("health-monitor", healthConfig));
     
     // Start secure manager

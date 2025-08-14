@@ -1,5 +1,5 @@
 #include "../include/core/module_manager.h"
-#include "../include/modules/http_server_module.h"
+
 #include "../include/modules/health_monitor_module.h"
 #include "../include/modules/api_module.h"
 #include <iostream>
@@ -31,10 +31,6 @@ int main() {
         g_moduleManager = &moduleManager;
         
         // Register modules
-        moduleManager.registerModule("http-server", []() {
-            return std::make_unique<HttpServerModule>();
-        });
-        
         moduleManager.registerModule("health-monitor", []() {
             return std::make_unique<HealthMonitorModule>();
         });
@@ -43,15 +39,7 @@ int main() {
             return std::make_unique<ApiModule>();
         });
         
-        std::cout << "📦 Registered modules: http-server, health-monitor, api" << std::endl;
-        
-        // Load and configure HTTP server module
-        std::map<std::string, std::string> httpConfig = {
-            {"port", "8082"},
-            {"host", "0.0.0.0"},
-            {"max_connections", "100"},
-            {"enable_cors", "true"}
-        };
+        std::cout << "📦 Registered modules: health-monitor, api" << std::endl;
         
         // Load and configure health monitor module
         std::map<std::string, std::string> healthConfig = {
@@ -63,18 +51,13 @@ int main() {
         
         // Load and configure API module
         std::map<std::string, std::string> apiConfig = {
-            {"port", "8083"},
+            {"port", "8084"},
             {"host", "0.0.0.0"},
             {"max_connections", "100"},
             {"enable_cors", "true"}
         };
         
         // Load modules
-        if (!moduleManager.loadModule("http-server", httpConfig)) {
-            std::cerr << "❌ Failed to load http-server module" << std::endl;
-            return 1;
-        }
-        
         if (!moduleManager.loadModule("health-monitor", healthConfig)) {
             std::cerr << "❌ Failed to load health-monitor module" << std::endl;
             return 1;
@@ -85,20 +68,20 @@ int main() {
             return 1;
         }
         
-        // Add health checks to monitor the HTTP server
+        // Add health checks to monitor the API server
         auto healthMonitor = moduleManager.getModule("health-monitor");
         if (auto* hm = dynamic_cast<HealthMonitorModule*>(healthMonitor)) {
-            HealthCheckConfig httpCheck = {
-                "http-server", "http", "http://localhost:8082/health", 5000, 10000, 3
+            HealthCheckConfig apiCheck = {
+                "api-server", "http", "http://localhost:8084/health", 5000, 10000, 3
             };
-            hm->addHealthCheck(httpCheck);
+            hm->addHealthCheck(apiCheck);
             
             HealthCheckConfig mainCheck = {
-                "main-endpoint", "http", "http://localhost:8082/", 5000, 15000, 3
+                "main-endpoint", "http", "http://localhost:8084/", 5000, 15000, 3
             };
             hm->addHealthCheck(mainCheck);
             
-            std::cout << "📋 Added health checks for HTTP server" << std::endl;
+            std::cout << "📋 Added health checks for API server" << std::endl;
         }
         
         std::cout << "✅ Modules loaded successfully" << std::endl;
@@ -108,15 +91,11 @@ int main() {
         
         std::cout << "🎯 Application is running..." << std::endl;
         std::cout << "📊 Available endpoints:" << std::endl;
-        std::cout << "   HTTP Server (Legacy):" << std::endl;
-        std::cout << "     GET http://localhost:8082/ - Main endpoint" << std::endl;
-        std::cout << "     GET http://localhost:8082/health - Health check" << std::endl;
-        std::cout << "     GET http://localhost:8082/status - Module status" << std::endl;
         std::cout << "   API Server (Oat++):" << std::endl;
-        std::cout << "     GET http://localhost:8083/ - API information" << std::endl;
-        std::cout << "     GET http://localhost:8083/health - Health check" << std::endl;
-        std::cout << "     GET http://localhost:8083/status - Server status" << std::endl;
-        std::cout << "     GET http://localhost:8083/api/info - API information" << std::endl;
+        std::cout << "     GET http://localhost:8084/ - API information" << std::endl;
+        std::cout << "     GET http://localhost:8084/health - Health check" << std::endl;
+        std::cout << "     GET http://localhost:8084/status - Server status" << std::endl;
+        std::cout << "     GET http://localhost:8084/api/info - API information" << std::endl;
         std::cout << "🔧 Press Ctrl+C to stop" << std::endl;
         
         // Keep the application running

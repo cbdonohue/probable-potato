@@ -35,7 +35,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 BUILD_DIR="$PROJECT_ROOT/build"
 
 # Available modules
-MODULES=("http-server" "health-monitor" "core" "all")
+MODULES=("api" "health-monitor" "core" "all")
 
 # Build a specific module
 build_module() {
@@ -133,7 +133,7 @@ case "${1:-}" in
         
         # Check if module is valid (exclude "all" and "core")
         if [ "$2" = "all" ] || [ "$2" = "core" ]; then
-            log_error "Cannot run '$2'. Please specify a specific module (http-server or health-monitor)."
+            log_error "Cannot run '$2'. Please specify a specific module (api or health-monitor)."
             exit 1
         fi
         
@@ -159,8 +159,8 @@ case "${1:-}" in
         echo ""
         show_modules
         echo "Examples:"
-        echo "  $0 build http-server"
-        echo "  $0 run http-server"
+            echo "  $0 build api"
+    echo "  $0 run api"
         echo "  $0 build all"
         echo "  $0 clean"
         ;;

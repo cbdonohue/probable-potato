@@ -10,7 +10,7 @@
 
 // Include SwarmApp components
 #include "core/module_manager.h"
-#include "modules/http_server_module.h"
+#include "modules/api_module.h"
 #include "modules/health_monitor_module.h"
 
 using namespace swarm;
@@ -98,7 +98,7 @@ TEST_F(StandaloneAppsTest, HealthMonitorStandalone) {
 // Test HTTP Server Standalone Application
 TEST_F(StandaloneAppsTest, HttpServerStandalone) {
     // Test HTTP server module creation and configuration
-    auto server = std::make_unique<HttpServerModule>();
+    auto server = std::make_unique<ApiModule>();
     
     // Test configuration
     std::map<std::string, std::string> config = {
@@ -181,22 +181,13 @@ TEST_F(StandaloneAppsTest, MonolithicStandalone) {
     ModuleManager moduleManager;
     
     // Register both HTTP server and health monitor modules
-    moduleManager.registerModule("http-server", []() {
-        return std::make_unique<HttpServerModule>();
-    });
+
     
     moduleManager.registerModule("health-monitor", []() {
         return std::make_unique<HealthMonitorModule>();
     });
     
     // Configure HTTP server module
-    std::map<std::string, std::string> httpConfig = {
-        {"port", "8083"},  // Use different port for testing
-        {"host", "127.0.0.1"},
-        {"max_connections", "100"},
-        {"enable_cors", "true"}
-    };
-    
     // Configure health monitor module
     std::map<std::string, std::string> healthConfig = {
         {"default_timeout_ms", "5000"},
@@ -205,8 +196,7 @@ TEST_F(StandaloneAppsTest, MonolithicStandalone) {
         {"enable_notifications", "true"}
     };
     
-    // Load both modules
-    EXPECT_TRUE(moduleManager.loadModule("http-server", httpConfig));
+    // Load health monitor module
     EXPECT_TRUE(moduleManager.loadModule("health-monitor", healthConfig));
     
     // Start all modules (but don't actually start HTTP server to avoid hanging)
@@ -214,16 +204,15 @@ TEST_F(StandaloneAppsTest, MonolithicStandalone) {
     
     // Modules are already loaded from above, so we can't load them again
     // Instead, just verify they are loaded but not running
-    EXPECT_FALSE(moduleManager.isModuleRunning("http-server"));
     EXPECT_FALSE(moduleManager.isModuleRunning("health-monitor"));
     
     // Test health check integration
     auto healthMonitor = moduleManager.getModule("health-monitor");
     if (auto* hm = dynamic_cast<HealthMonitorModule*>(healthMonitor)) {
-        HealthCheckConfig httpCheck = {
-            "http-server", "http", "http://127.0.0.1:8083/health", 5000, 10000, 3
+        HealthCheckConfig apiCheck = {
+            "api-server", "http", "http://127.0.0.1:8083/health", 5000, 10000, 3
         };
-        hm->addHealthCheck(httpCheck);
+        hm->addHealthCheck(apiCheck);
         
         // Wait a moment for health checks to run
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -235,8 +224,7 @@ TEST_F(StandaloneAppsTest, MonolithicStandalone) {
     
     // Test module statuses
     auto statuses = moduleManager.getModuleStatuses();
-    EXPECT_EQ(statuses.size(), 2);
-    EXPECT_NE(statuses.find("http-server"), statuses.end());
+    EXPECT_EQ(statuses.size(), 1);
     EXPECT_NE(statuses.find("health-monitor"), statuses.end());
     
     // Test HTTP endpoints (commented out to avoid hanging)
@@ -249,7 +237,6 @@ TEST_F(StandaloneAppsTest, MonolithicStandalone) {
     
     // Stop all modules
     moduleManager.stopAllModules();
-    EXPECT_FALSE(moduleManager.isModuleRunning("http-server"));
     EXPECT_FALSE(moduleManager.isModuleRunning("health-monitor"));
     
     // Shutdown
@@ -302,8 +289,8 @@ TEST_F(StandaloneAppsTest, StandaloneAppErrorHandling) {
         EXPECT_TRUE(true);
     }
     
-    // Test HTTP server with invalid port
-    auto server = std::make_unique<HttpServerModule>();
+    // Test API server with invalid port
+    auto server = std::make_unique<ApiModule>();
     
     std::map<std::string, std::string> invalidServerConfig = {
         {"port", "99999"},  // Invalid port

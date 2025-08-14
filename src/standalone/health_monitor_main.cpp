@@ -36,7 +36,7 @@ int main() {
 
         if (!monitor->configure(config)) {
             std::cerr << "❌ Failed to configure Health Monitor module" << std::endl;
-            return 1;
+            return 1;f
         }
 
         if (!monitor->initialize()) {
@@ -46,14 +46,14 @@ int main() {
 
         std::cout << "✅ Health Monitor module initialized successfully" << std::endl;
 
-        // Add health checks for the web service
-        HealthCheckConfig httpCheck = {
-            "web-service", "http", "http://swarm-app_http-server:8080/health", 5000, 10000, 3
+        // Add health checks for the API service
+        HealthCheckConfig apiCheck = {
+            "api-service", "http", "http://swarm-app_api:8083/health", 5000, 10000, 3
         };
-        monitor->addHealthCheck(httpCheck);
+        monitor->addHealthCheck(apiCheck);
 
         HealthCheckConfig mainCheck = {
-            "main-endpoint", "http", "http://swarm-app_http-server:8080/", 5000, 15000, 3
+            "main-endpoint", "http", "http://swarm-app_api:8083/", 5000, 15000, 3
         };
         monitor->addHealthCheck(mainCheck);
 

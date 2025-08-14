@@ -28,12 +28,6 @@ target_link_libraries(swarm-core ${ZMQ_LIBRARIES})
 target_compile_options(swarm-core PUBLIC ${ZMQ_CFLAGS_OTHER})
 
 # Individual module libraries
-add_library(swarm-http-server
-    src/modules/http-server/http_server_module.cpp
-)
-
-target_link_libraries(swarm-http-server swarm-core Threads::Threads)
-target_include_directories(swarm-http-server PUBLIC include)
 
 add_library(swarm-health-monitor
     src/modules/health-monitor/health_monitor_module.cpp
@@ -59,22 +53,12 @@ add_executable(swarm-app
 # Link all libraries to main executable
 target_link_libraries(swarm-app 
     swarm-core 
-    swarm-http-server 
     swarm-health-monitor 
     swarm-api
     Threads::Threads
 )
 
-# Standalone module executables (for testing individual modules)
-add_executable(http-server-standalone
-    src/standalone/http_server_main.cpp
-)
 
-target_link_libraries(http-server-standalone 
-    swarm-http-server 
-    Threads::Threads
-    ${ZMQ_LIBRARIES}
-)
 
 add_executable(health-monitor-standalone
     src/standalone/health_monitor_main.cpp
@@ -135,8 +119,8 @@ if(GTest_FOUND)
     add_executable(test-standalone-apps tests/test_standalone_apps.cpp)
     target_link_libraries(test-standalone-apps 
         swarm-core 
-        swarm-http-server 
         swarm-health-monitor 
+        swarm-api
         GTest::gtest 
         GTest::gtest_main 
         GTest::gmock 
@@ -144,6 +128,7 @@ if(GTest_FOUND)
         ${ZMQ_LIBRARIES}
     )
     target_include_directories(test-standalone-apps PUBLIC include)
+    target_include_directories(test-standalone-apps PUBLIC /usr/local/include/oatpp-1.4.0)
     target_link_libraries(test-standalone-apps ${CURL_LIBRARIES})
     target_include_directories(test-standalone-apps PUBLIC ${CURL_INCLUDE_DIRS})
     target_compile_options(test-standalone-apps PUBLIC ${CURL_CFLAGS_OTHER})
@@ -152,8 +137,8 @@ if(GTest_FOUND)
     add_executable(test-individual-standalone tests/test_individual_standalone.cpp)
     target_link_libraries(test-individual-standalone 
         swarm-core 
-        swarm-http-server 
         swarm-health-monitor 
+        swarm-api
         GTest::gtest 
         GTest::gtest_main 
         GTest::gmock 
@@ -161,6 +146,7 @@ if(GTest_FOUND)
         ${ZMQ_LIBRARIES}
     )
     target_include_directories(test-individual-standalone PUBLIC include)
+    target_include_directories(test-individual-standalone PUBLIC /usr/local/include/oatpp-1.4.0)
     target_link_libraries(test-individual-standalone ${CURL_LIBRARIES})
     target_include_directories(test-individual-standalone PUBLIC ${CURL_INCLUDE_DIRS})
     target_compile_options(test-individual-standalone PUBLIC ${CURL_CFLAGS_OTHER})
@@ -169,7 +155,6 @@ if(GTest_FOUND)
     add_executable(test-swarm-integration tests/test_swarm_integration.cpp)
     target_link_libraries(test-swarm-integration 
         swarm-core 
-        swarm-http-server 
         swarm-health-monitor 
         swarm-api
         GTest::gtest 
@@ -179,6 +164,7 @@ if(GTest_FOUND)
         ${ZMQ_LIBRARIES}
     )
     target_include_directories(test-swarm-integration PUBLIC include)
+    target_include_directories(test-swarm-integration PUBLIC /usr/local/include/oatpp-1.4.0)
     target_link_libraries(test-swarm-integration ${CURL_LIBRARIES})
     target_include_directories(test-swarm-integration PUBLIC ${CURL_INCLUDE_DIRS})
     target_compile_options(test-swarm-integration PUBLIC ${CURL_CFLAGS_OTHER})

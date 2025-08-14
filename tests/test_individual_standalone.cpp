@@ -12,7 +12,7 @@
 
 // Include SwarmApp components
 #include "core/module_manager.h"
-#include "modules/http_server_module.h"
+#include "modules/api_module.h"
 #include "modules/health_monitor_module.h"
 
 using namespace swarm;
@@ -114,11 +114,11 @@ TEST_F(IndividualStandaloneTest, HealthMonitorStandaloneDetailed) {
     EXPECT_NE(monitor->getStatus().find("running: no"), std::string::npos);
 }
 
-// Test HTTP Server Standalone Application - Detailed Tests
-TEST_F(IndividualStandaloneTest, HttpServerStandaloneDetailed) {
+// Test API Server Standalone Application - Detailed Tests
+TEST_F(IndividualStandaloneTest, ApiServerStandaloneDetailed) {
     // Test 1: Basic initialization
-    auto server = std::make_unique<HttpServerModule>();
-    EXPECT_EQ(server->getName(), "http-server");
+    auto server = std::make_unique<ApiModule>();
+    EXPECT_EQ(server->getName(), "api");
     EXPECT_FALSE(server->isRunning());
     // Status should reflect that it's not running
     EXPECT_NE(server->getStatus().find("running: no"), std::string::npos);
@@ -127,7 +127,7 @@ TEST_F(IndividualStandaloneTest, HttpServerStandaloneDetailed) {
     std::vector<std::string> testPorts = {"8081", "8082", "8083"};
     
     for (const auto& port : testPorts) {
-        auto testServer = std::make_unique<HttpServerModule>();
+        auto testServer = std::make_unique<ApiModule>();
         
         std::map<std::string, std::string> config = {
             {"port", port},
@@ -287,16 +287,16 @@ TEST_F(IndividualStandaloneTest, MonolithicStandaloneDetailed) {
     ModuleManager monolithicManager;
     
     // Register all modules
-    monolithicManager.registerModule("http-server", []() {
-        return std::make_unique<HttpServerModule>();
-    });
+            monolithicManager.registerModule("api", []() {
+            return std::make_unique<ApiModule>();
+        });
     
     monolithicManager.registerModule("health-monitor", []() {
         return std::make_unique<HealthMonitorModule>();
     });
     
     // Test 2: Configuration for all modules
-    std::map<std::string, std::string> httpConfig = {
+    std::map<std::string, std::string> apiConfig = {
         {"port", "8085"},
         {"host", "127.0.0.1"},
         {"max_connections", "100"},
@@ -311,27 +311,27 @@ TEST_F(IndividualStandaloneTest, MonolithicStandaloneDetailed) {
     };
     
     // Test 3: Load all modules
-    EXPECT_TRUE(monolithicManager.loadModule("http-server", httpConfig));
+    EXPECT_TRUE(monolithicManager.loadModule("api", apiConfig));
     EXPECT_TRUE(monolithicManager.loadModule("health-monitor", healthConfig));
     
     // Test 4: Start all modules (but don't actually start to avoid hanging)
     // monolithicManager.startAllModules();
     
-    // EXPECT_TRUE(monolithicManager.isModuleRunning("http-server"));
+    // EXPECT_TRUE(monolithicManager.isModuleRunning("api"));
     // EXPECT_TRUE(monolithicManager.isModuleRunning("health-monitor"));
     
     // Instead, just verify modules are loaded
-    EXPECT_FALSE(monolithicManager.isModuleRunning("http-server"));
+    EXPECT_FALSE(monolithicManager.isModuleRunning("api"));
     EXPECT_FALSE(monolithicManager.isModuleRunning("health-monitor"));
     
     // Test 5: Inter-module communication
     auto healthMonitor = monolithicManager.getModule("health-monitor");
     if (auto* hm = dynamic_cast<HealthMonitorModule*>(healthMonitor)) {
-        // Add health checks for the HTTP server
-        HealthCheckConfig httpCheck = {
-            "http-server", "http", "http://127.0.0.1:8085/health", 5000, 10000, 3
+        // Add health checks for the API server
+        HealthCheckConfig apiCheck = {
+            "api-server", "http", "http://127.0.0.1:8085/health", 5000, 10000, 3
         };
-        hm->addHealthCheck(httpCheck);
+        hm->addHealthCheck(apiCheck);
         
         HealthCheckConfig mainCheck = {
             "main-endpoint", "http", "http://127.0.0.1:8085/", 5000, 15000, 3
@@ -362,12 +362,12 @@ TEST_F(IndividualStandaloneTest, MonolithicStandaloneDetailed) {
     // Test 7: Module status monitoring
     auto statuses = monolithicManager.getModuleStatuses();
     EXPECT_EQ(statuses.size(), 2);
-    EXPECT_NE(statuses.find("http-server"), statuses.end());
+    EXPECT_NE(statuses.find("api"), statuses.end());
     EXPECT_NE(statuses.find("health-monitor"), statuses.end());
     
     // Test 8: Graceful shutdown (modules weren't started, so just shutdown)
     // monolithicManager.stopAllModules();
-    // EXPECT_FALSE(monolithicManager.isModuleRunning("http-server"));
+    // EXPECT_FALSE(monolithicManager.isModuleRunning("api"));
     // EXPECT_FALSE(monolithicManager.isModuleRunning("health-monitor"));
     
     monolithicManager.shutdownAllModules();

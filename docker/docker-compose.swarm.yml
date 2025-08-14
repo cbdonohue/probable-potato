@@ -14,31 +14,7 @@ services:
     networks:
       - swarm-network
 
-  http-server:
-    image: swarm-http-server:latest
-    ports:
-      - "8080:8080"
-    environment:
-      - FLASK_ENV=production
-      - ZMQ_PUB_PORT=5555
-      - ZMQ_SUB_PORT=5556
-    deploy:
-      replicas: 3
-      update_config:
-        parallelism: 1
-        delay: 10s
-      restart_policy:
-        condition: on-failure
-    networks:
-      - swarm-network
-    depends_on:
-      - core
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+
 
   health-monitor:
     image: swarm-health-monitor:latest
@@ -60,7 +36,6 @@ services:
       - swarm-network
     depends_on:
       - core
-      - http-server
 
   api:
     image: swarm-api:latest
