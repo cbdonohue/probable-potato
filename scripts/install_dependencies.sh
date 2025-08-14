@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SwarmApp Dependencies Installation Script
-# This script installs all required dependencies for building and testing SwarmApp
+# This script installs all required dependencies for the SwarmApp project
 
 set -e  # Exit on any error
 
@@ -21,7 +21,9 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
             libzmq3-dev \
             libcurl4-openssl-dev \
             libgtest-dev \
-            libgmock-dev
+            libgmock-dev \
+            git \
+            libboost-all-dev
     elif command -v yum &> /dev/null; then
         # CentOS/RHEL/Fedora
         echo "Detected CentOS/RHEL/Fedora system"
@@ -33,7 +35,9 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
             zeromq-devel \
             libcurl-devel \
             gtest-devel \
-            gmock-devel
+            gmock-devel \
+            git \
+            boost-devel
     elif command -v dnf &> /dev/null; then
         # Fedora (newer versions)
         echo "Detected Fedora system"
@@ -45,7 +49,9 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
             zeromq-devel \
             libcurl-devel \
             gtest-devel \
-            gmock-devel
+            gmock-devel \
+            git \
+            boost-devel
     else
         echo "Unsupported Linux distribution. Please install dependencies manually:"
         echo "- build-essential (or gcc-c++)"
@@ -55,8 +61,24 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         echo "- libcurl4-openssl-dev (or libcurl-devel)"
         echo "- libgtest-dev (or gtest-devel)"
         echo "- libgmock-dev (or gmock-devel)"
+        echo "- git"
+        echo "- libboost-all-dev (or boost-devel)"
         exit 1
     fi
+    
+    # Install Oat++ from source (required for all Linux distributions)
+    echo "Installing Oat++ framework..."
+    if [ ! -d "oatpp" ]; then
+        git clone https://github.com/oatpp/oatpp.git
+    fi
+    cd oatpp
+    mkdir -p build && cd build
+    cmake ..
+    make -j$(nproc)
+    sudo make install
+    cd ../..
+    echo "Oat++ installed successfully"
+    
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS
     echo "Detected macOS system"
@@ -67,12 +89,28 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
             pkg-config \
             zeromq \
             curl \
-            googletest
+            googletest \
+            git \
+            boost
     else
         echo "Homebrew not found. Please install Homebrew first:"
         echo "https://brew.sh/"
         exit 1
     fi
+    
+    # Install Oat++ from source on macOS
+    echo "Installing Oat++ framework..."
+    if [ ! -d "oatpp" ]; then
+        git clone https://github.com/oatpp/oatpp.git
+    fi
+    cd oatpp
+    mkdir -p build && cd build
+    cmake ..
+    make -j$(nproc)
+    sudo make install
+    cd ../..
+    echo "Oat++ installed successfully"
+    
 else
     echo "Unsupported operating system: $OSTYPE"
     echo "Please install dependencies manually:"
@@ -82,6 +120,9 @@ else
     echo "- ZeroMQ development libraries"
     echo "- CURL development libraries"
     echo "- Google Test"
+    echo "- Git"
+    echo "- Boost libraries"
+    echo "- Oat++ framework (from https://github.com/oatpp/oatpp)"
     exit 1
 fi
 

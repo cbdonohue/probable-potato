@@ -6,7 +6,8 @@ A distributed, modular C++ application framework with health monitoring, HTTP se
 
 - **Modular Architecture**: Plugin-based module system with dynamic loading
 - **Health Monitoring**: Real-time health checks and status monitoring
-- **HTTP Server**: Configurable HTTP endpoints with CORS support
+- **HTTP Server**: Configurable HTTP endpoints with CORS support (legacy)
+- **API Server**: Modern REST API using Oat++ framework
 - **Message Bus**: ZeroMQ-based inter-module communication
 - **Swarm Support**: Multi-node deployment and orchestration
 - **Comprehensive Testing**: Full unit and integration test suite
@@ -90,9 +91,16 @@ ctest --output-on-failure --verbose
 ./swarm-health-monitor --config health_monitor.conf
 ```
 
-#### HTTP Server
+#### HTTP Server (Legacy)
 ```bash
 ./swarm-http-server --config http_server.conf
+```
+
+#### API Server (Oat++)
+```bash
+./swarm-api --config api.conf
+# or with command line options:
+./api-standalone --host 0.0.0.0 --port 8080 --max-connections 100
 ```
 
 #### Core Service
@@ -110,7 +118,13 @@ ctest --output-on-failure --verbose
 Configuration files use a simple key-value format:
 
 ```ini
-# HTTP Server Configuration
+# HTTP Server Configuration (Legacy)
+port=8080
+host=127.0.0.1
+max_connections=100
+enable_cors=true
+
+# API Server Configuration (Oat++)
 port=8080
 host=127.0.0.1
 max_connections=100
@@ -130,7 +144,8 @@ SwarmApp consists of several core components:
 - **Module Manager**: Handles module lifecycle and dependencies
 - **Message Bus**: ZeroMQ-based communication system
 - **Health Monitor**: Service health checking and monitoring
-- **HTTP Server**: RESTful API endpoints
+- **HTTP Server**: RESTful API endpoints (legacy)
+- **API Server**: Modern REST API with JSON DTOs
 - **Swarm Orchestrator**: Multi-node deployment management
 
 ## Development

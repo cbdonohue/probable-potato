@@ -23,7 +23,19 @@ jobs:
           libzmq3-dev \
           libcurl4-openssl-dev \
           libgtest-dev \
-          libgmock-dev
+          libgmock-dev \
+          git \
+          libboost-all-dev
+    
+    - name: Install Oat++
+      run: |
+        git clone https://github.com/oatpp/oatpp.git
+        cd oatpp
+        mkdir -p build && cd build
+        cmake ..
+        make -j$(nproc)
+        sudo make install
+        cd ../..
     
     - name: Create build directory
       run: mkdir -p build

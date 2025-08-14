@@ -42,6 +42,15 @@ add_library(swarm-health-monitor
 target_link_libraries(swarm-health-monitor swarm-core Threads::Threads)
 target_include_directories(swarm-health-monitor PUBLIC include)
 
+# API Module (Oat++ based)
+add_library(swarm-api
+    src/modules/api/api_module.cpp
+)
+
+target_link_libraries(swarm-api swarm-core Threads::Threads oatpp::oatpp)
+target_include_directories(swarm-api PUBLIC include)
+target_include_directories(swarm-api PUBLIC /usr/local/include/oatpp-1.4.0)
+
 # Main executable (links all modules)
 add_executable(swarm-app 
     src/main.cpp
@@ -52,6 +61,7 @@ target_link_libraries(swarm-app
     swarm-core 
     swarm-http-server 
     swarm-health-monitor 
+    swarm-api
     Threads::Threads
 )
 
@@ -86,12 +96,26 @@ target_link_libraries(core-standalone
     ${ZMQ_LIBRARIES}
 )
 
+add_executable(api-standalone
+    src/standalone/api_main.cpp
+)
+
+target_link_libraries(api-standalone 
+    swarm-api 
+    Threads::Threads
+    ${ZMQ_LIBRARIES}
+)
+target_include_directories(api-standalone PUBLIC /usr/local/include/oatpp-1.4.0)
+
 # Find Google Test (optional for production builds)
 find_package(GTest QUIET)
 
 # Find CURL for HTTP testing
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(CURL REQUIRED libcurl)
+
+# Find Oat++ framework
+find_package(oatpp REQUIRED)
 
 # Tests (only if GTest is available)
 if(GTest_FOUND)
@@ -147,6 +171,7 @@ if(GTest_FOUND)
         swarm-core 
         swarm-http-server 
         swarm-health-monitor 
+        swarm-api
         GTest::gtest 
         GTest::gtest_main 
         GTest::gmock 
@@ -158,12 +183,26 @@ if(GTest_FOUND)
     target_include_directories(test-swarm-integration PUBLIC ${CURL_INCLUDE_DIRS})
     target_compile_options(test-swarm-integration PUBLIC ${CURL_CFLAGS_OTHER})
     
+    # API module test
+    add_executable(test-api-module tests/test_api_module.cpp)
+    target_link_libraries(test-api-module 
+        swarm-api 
+        GTest::gtest 
+        GTest::gtest_main 
+        GTest::gmock 
+        Threads::Threads 
+        ${ZMQ_LIBRARIES}
+    )
+    target_include_directories(test-api-module PUBLIC include)
+    target_include_directories(test-api-module PUBLIC /usr/local/include/oatpp-1.4.0)
+    
     # Add all tests
     add_test(NAME UnitTests COMMAND test-swarm-app)
     add_test(NAME ZeroMQMessageBusTests COMMAND test-zeromq-message-bus)
     add_test(NAME StandaloneAppsTests COMMAND test-standalone-apps)
     add_test(NAME IndividualStandaloneTests COMMAND test-individual-standalone)
     add_test(NAME SwarmIntegrationTests COMMAND test-swarm-integration)
+    add_test(NAME ApiModuleTests COMMAND test-api-module)
     
     # Test suite for all standalone and swarm tests
     add_test(NAME StandaloneAndSwarmTests 

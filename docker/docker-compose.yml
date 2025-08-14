@@ -15,6 +15,25 @@ services:
       retries: 3
       start_period: 40s
 
+  api:
+    image: swarm-api:latest
+    ports:
+      - "8083:8083"
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8083
+      - API_MAX_CONNECTIONS=100
+      - API_ENABLE_CORS=true
+    restart: unless-stopped
+    networks:
+      - swarm-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
 networks:
   swarm-network:
     driver: bridge

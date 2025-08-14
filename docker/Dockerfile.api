@@ -1,0 +1,55 @@
+FROM ubuntu:22.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV OATPP_VERSION=1.4.0
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    pkg-config \
+    libzmq3-dev \
+    libcurl4-openssl-dev \
+    git \
+    libboost-all-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Oat++ framework
+RUN git clone https://github.com/oatpp/oatpp.git && \
+    cd oatpp && \
+    mkdir -p build && cd build && \
+    cmake .. && \
+    make -j$(nproc) && \
+    make install && \
+    cd ../.. && \
+    rm -rf oatpp
+
+# Set working directory
+WORKDIR /app
+
+# Copy source code from project root
+COPY .. .
+
+# Build the application
+RUN rm -rf build && mkdir -p build && cd build && \
+    cmake .. && \
+    make api-standalone -j$(nproc)
+
+# Create non-root user
+RUN useradd -m -u 1000 swarm && \
+    chown -R swarm:swarm /app
+
+# Switch to non-root user
+USER swarm
+
+# Expose API port
+EXPOSE 8083
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8083/health || exit 1
+
+# Default command
+CMD ["./build/api-standalone", "--host", "0.0.0.0", "--port", "8083"]
