@@ -63,6 +63,8 @@ TEST_F(SwarmAppCoreTest, MessageBusAsyncFunctionality) {
     
     // Subscribe to a test topic
     messageBus.subscribe("async.topic", [&](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         messageCount++;
     });
     
@@ -87,10 +89,14 @@ TEST_F(SwarmAppCoreTest, MessageBusMultipleSubscribers) {
     
     // Subscribe with two different handlers
     messageBus.subscribe("multi.topic", [&](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         subscriber1Count++;
     });
     
     messageBus.subscribe("multi.topic", [&](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         subscriber2Count++;
     });
     
@@ -113,6 +119,8 @@ TEST_F(SwarmAppCoreTest, MessageBusStatistics) {
     
     // Subscribe to a topic
     messageBus.subscribe("stats.topic", [](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         // Do nothing, just count
     });
     
@@ -154,12 +162,16 @@ TEST_F(SwarmAppCoreTest, MessageBusErrorHandling) {
     
     // Subscribe with a handler that throws an exception
     messageBus.subscribe("error.topic", [](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         throw std::runtime_error("Test exception");
     });
     
     // Also subscribe with a normal handler
     std::atomic<bool> normalHandlerCalled{false};
     messageBus.subscribe("error.topic", [&](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         normalHandlerCalled = true;
     });
     
@@ -196,8 +208,14 @@ TEST_F(SwarmAppCoreTest, ModuleBaseClass) {
         bool isRunning() const override { return running_; }
         std::string getStatus() const override { return running_ ? "running" : "stopped"; }
         
-        bool configure(const std::map<std::string, std::string>& config) override { return true; }
-        void onMessage(const std::string& topic, const std::string& message) override {}
+        bool configure(const std::map<std::string, std::string>& config) override { 
+            (void)config; // Suppress unused parameter warning
+            return true; 
+        }
+        void onMessage(const std::string& topic, const std::string& message) override {
+            (void)topic; // Suppress unused parameter warning
+            (void)message; // Suppress unused parameter warning
+        }
         
     private:
         bool running_;
@@ -241,8 +259,14 @@ TEST_F(SwarmAppCoreTest, ModuleManagerBasicFunctionality) {
             std::vector<std::string> getDependencies() const override { return {}; }
             bool isRunning() const override { return false; }
             std::string getStatus() const override { return "stopped"; }
-            bool configure(const std::map<std::string, std::string>& config) override { return true; }
-            void onMessage(const std::string& topic, const std::string& message) override {}
+            bool configure(const std::map<std::string, std::string>& config) override { 
+                (void)config; // Suppress unused parameter warning
+                return true; 
+            }
+            void onMessage(const std::string& topic, const std::string& message) override {
+                (void)topic; // Suppress unused parameter warning
+                (void)message; // Suppress unused parameter warning
+            }
         };
         return std::make_unique<TestModule>();
     });
@@ -270,6 +294,7 @@ TEST_F(SwarmAppCoreTest, ZeroMQIntegration) {
     
     // Subscribe to ZeroMQ messages
     messageBus.subscribe("zeromq.test", [&](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
         lastMessage = message;
         messageCount++;
     });

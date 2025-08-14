@@ -124,7 +124,7 @@ TEST_F(IndividualStandaloneTest, ApiServerStandaloneDetailed) {
     EXPECT_NE(server->getStatus().find("running: no"), std::string::npos);
     
     // Test 2: Configuration with different ports
-    std::vector<std::string> testPorts = {"8081", "8082", "8083"};
+    std::vector<std::string> testPorts = {"9081", "9082", "9083"};
     
     for (const auto& port : testPorts) {
         auto testServer = std::make_unique<ApiModule>();
@@ -160,7 +160,7 @@ TEST_F(IndividualStandaloneTest, ApiServerStandaloneDetailed) {
     
     // Test 3: Configuration validation
     std::map<std::string, std::string> validConfig = {
-        {"port", "8084"},
+        {"port", "9084"},
         {"host", "127.0.0.1"},
         {"max_connections", "100"},
         {"enable_cors", "true"}
@@ -223,8 +223,14 @@ TEST_F(IndividualStandaloneTest, CoreServiceStandaloneDetailed) {
                 bool isRunning() const override { return running_; }
                 std::string getStatus() const override { return running_ ? "running" : "stopped"; }
                 
-                bool configure(const std::map<std::string, std::string>& config) override { return true; }
-                void onMessage(const std::string& topic, const std::string& message) override {}
+                bool configure(const std::map<std::string, std::string>& config) override { 
+                    (void)config; // Suppress unused parameter warning
+                    return true; 
+                }
+                void onMessage(const std::string& topic, const std::string& message) override {
+                    (void)topic; // Suppress unused parameter warning
+                    (void)message; // Suppress unused parameter warning
+                }
                 
             private:
                 std::string name_;
@@ -256,6 +262,7 @@ TEST_F(IndividualStandaloneTest, CoreServiceStandaloneDetailed) {
     std::vector<std::string> receivedMessages;
     
     messageBus->subscribe("core.test", [&](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
         receivedMessages.push_back(message);
         messageCount++;
     });
@@ -297,7 +304,7 @@ TEST_F(IndividualStandaloneTest, MonolithicStandaloneDetailed) {
     
     // Test 2: Configuration for all modules
     std::map<std::string, std::string> apiConfig = {
-        {"port", "8085"},
+        {"port", "9085"},
         {"host", "127.0.0.1"},
         {"max_connections", "100"},
         {"enable_cors", "true"}
@@ -329,12 +336,12 @@ TEST_F(IndividualStandaloneTest, MonolithicStandaloneDetailed) {
     if (auto* hm = dynamic_cast<HealthMonitorModule*>(healthMonitor)) {
         // Add health checks for the API server
         HealthCheckConfig apiCheck = {
-            "api-server", "http", "http://127.0.0.1:8085/health", 5000, 10000, 3
+            "api-server", "http", "http://127.0.0.1:9085/health", 5000, 10000, 3
         };
         hm->addHealthCheck(apiCheck);
         
         HealthCheckConfig mainCheck = {
-            "main-endpoint", "http", "http://127.0.0.1:8085/", 5000, 15000, 3
+            "main-endpoint", "http", "http://127.0.0.1:9085/", 5000, 15000, 3
         };
         hm->addHealthCheck(mainCheck);
         
@@ -344,7 +351,7 @@ TEST_F(IndividualStandaloneTest, MonolithicStandaloneDetailed) {
         // Check health status (without starting)
         auto healthStatus = hm->getAllHealthStatus();
         // Size depends on whether monitor is running
-        EXPECT_TRUE(healthStatus.size() >= 0);
+        EXPECT_TRUE(healthStatus.size() >= 0U);
     }
     
     // Test 6: HTTP endpoint testing (commented out to avoid hanging)
@@ -412,7 +419,7 @@ TEST_F(IndividualStandaloneTest, EdgeCasesAndErrors) {
     }
     
     // Test 3: HTTP server edge cases
-    auto server = std::make_unique<HttpServerModule>();
+    auto server = std::make_unique<ApiModule>();
     
     std::vector<std::map<std::string, std::string>> invalidServerConfigs = {
         {{"port", "99999"}},  // Invalid port
@@ -519,15 +526,15 @@ TEST_F(IndividualStandaloneTest, PerformanceAndResources) {
     EXPECT_LT(duration.count(), 100); // Should retrieve status within 100ms
     
     // Health status size depends on whether monitor is running
-    EXPECT_TRUE(healthStatus.size() >= 0);
+            EXPECT_TRUE(healthStatus.size() >= 0U);
     
     // monitor->stop();
     
     // Test 2: HTTP server performance
-    auto server = std::make_unique<HttpServerModule>();
+    auto server = std::make_unique<ApiModule>();
     
     std::map<std::string, std::string> serverConfig = {
-        {"port", "8086"},
+        {"port", "9086"},
         {"host", "127.0.0.1"},
         {"max_connections", "1000"},
         {"enable_cors", "true"}
@@ -584,8 +591,14 @@ TEST_F(IndividualStandaloneTest, PerformanceAndResources) {
                 bool isRunning() const override { return running_; }
                 std::string getStatus() const override { return running_ ? "running" : "stopped"; }
                 
-                bool configure(const std::map<std::string, std::string>& config) override { return true; }
-                void onMessage(const std::string& topic, const std::string& message) override {}
+                bool configure(const std::map<std::string, std::string>& config) override { 
+                    (void)config; // Suppress unused parameter warning
+                    return true; 
+                }
+                void onMessage(const std::string& topic, const std::string& message) override {
+                    (void)topic; // Suppress unused parameter warning
+                    (void)message; // Suppress unused parameter warning
+                }
                 
             private:
                 std::string name_;

@@ -86,7 +86,7 @@ TEST_F(SwarmIntegrationTest, CompleteSwarmSystem) {
     
     // Configure swarm components
     std::map<std::string, std::string> httpConfig = {
-        {"port", "8084"},
+        {"port", "9084"},
         {"host", "127.0.0.1"},
         {"max_connections", "100"},
         {"enable_cors", "true"},
@@ -96,7 +96,7 @@ TEST_F(SwarmIntegrationTest, CompleteSwarmSystem) {
     
     // Configure API server module
     std::map<std::string, std::string> apiConfig = {
-        {"port", "8083"},
+        {"port", "9083"},
         {"host", "127.0.0.1"},
         {"max_connections", "100"},
         {"enable_cors", "true"}
@@ -126,6 +126,7 @@ TEST_F(SwarmIntegrationTest, CompleteSwarmSystem) {
     std::string lastSwarmMessage;
     
     messageBus->subscribe("swarm.health", [&](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
         lastSwarmMessage = message;
         swarmMessageCount++;
     });
@@ -164,7 +165,9 @@ TEST_F(SwarmIntegrationTest, MultiNodeSwarmCommunication) {
     std::vector<std::unique_ptr<ModuleManager>> nodes;
     std::vector<std::string> nodeIds = {"node-001", "node-002", "node-003"};
     
-    for (const auto& nodeId : nodeIds) {
+    for (size_t i = 0; i < nodeIds.size(); i++) {
+        const auto& nodeId = nodeIds[i];
+        (void)nodeId; // Suppress unused variable warning
         auto node = std::make_unique<ModuleManager>();
         
         // Register modules for each node
@@ -176,9 +179,9 @@ TEST_F(SwarmIntegrationTest, MultiNodeSwarmCommunication) {
             return std::make_unique<HealthMonitorModule>();
         });
         
-        // Configure each node
+        // Configure each node with unique port
         std::map<std::string, std::string> httpConfig = {
-            {"port", "8085"},  // Each node would have different ports in real scenario
+            {"port", std::to_string(9085 + i)},  // Each node has different port
             {"host", "127.0.0.1"},
             {"max_connections", "50"},
             {"enable_cors", "true"}
@@ -192,7 +195,7 @@ TEST_F(SwarmIntegrationTest, MultiNodeSwarmCommunication) {
         };
         
         // Load modules
-        EXPECT_TRUE(node->loadModule("api", apiConfig));
+        EXPECT_TRUE(node->loadModule("api", httpConfig));
         EXPECT_TRUE(node->loadModule("health-monitor", healthConfig));
         
         // Start node (but don't actually start to avoid hanging)
@@ -206,6 +209,8 @@ TEST_F(SwarmIntegrationTest, MultiNodeSwarmCommunication) {
     
     // Subscribe to swarm messages on first node
     nodes[0]->getMessageBus()->subscribe("swarm.node.status", [&](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         interNodeMessageCount++;
     });
     
@@ -243,12 +248,12 @@ TEST_F(SwarmIntegrationTest, SwarmLoadBalancing) {
     
     // Configure load balancer
     std::map<std::string, std::string> lbConfig = {
-        {"port", "8086"},
+        {"port", "9086"},
         {"host", "127.0.0.1"},
         {"max_connections", "200"},
         {"enable_cors", "true"},
         {"load_balancing_algorithm", "round_robin"},
-        {"backend_nodes", "node-001:8087,node-002:8088,node-003:8089"}
+        {"backend_nodes", "node-001:9087,node-002:9088,node-003:9089"}
     };
     
     std::map<std::string, std::string> healthConfig = {
@@ -269,7 +274,7 @@ TEST_F(SwarmIntegrationTest, SwarmLoadBalancing) {
     auto healthMonitor = loadBalancer.getModule("health-monitor");
     if (auto* hm = dynamic_cast<HealthMonitorModule*>(healthMonitor)) {
         // Add health checks for backend nodes
-        std::vector<std::string> backendPorts = {"8087", "8088", "8089"};
+        std::vector<std::string> backendPorts = {"9087", "9088", "9089"};
         
         for (size_t i = 0; i < backendPorts.size(); i++) {
             HealthCheckConfig check = {
@@ -348,6 +353,8 @@ TEST_F(SwarmIntegrationTest, SwarmAutoScaling) {
     
     std::atomic<int> scalingEventCount{0};
     messageBus->subscribe("swarm.scaling", [&](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         scalingEventCount++;
     });
     
@@ -435,6 +442,8 @@ TEST_F(SwarmIntegrationTest, SwarmFaultTolerance) {
     
     std::atomic<int> faultEventCount{0};
     messageBus->subscribe("swarm.fault", [&](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         faultEventCount++;
     });
     
@@ -534,6 +543,8 @@ TEST_F(SwarmIntegrationTest, SwarmPerformanceUnderLoad) {
     
     // Subscribe to performance messages
     messageBus->subscribe("performance.test", [&](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         messageCount++;
     });
     
@@ -621,6 +632,8 @@ TEST_F(SwarmIntegrationTest, SwarmSecurity) {
     
     std::atomic<int> securityEventCount{0};
     messageBus->subscribe("swarm.security", [&](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         securityEventCount++;
     });
     

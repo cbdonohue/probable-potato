@@ -69,10 +69,14 @@ TEST_F(ZeroMQMessageBusTest, MultipleSubscribers) {
     
     // Subscribe with two different handlers
     messageBus->subscribe("multi.topic", [&subscriber1Count](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         subscriber1Count++;
     });
     
     messageBus->subscribe("multi.topic", [&subscriber2Count](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         subscriber2Count++;
     });
     
@@ -89,6 +93,8 @@ TEST_F(ZeroMQMessageBusTest, MultipleSubscribers) {
 TEST_F(ZeroMQMessageBusTest, MessageCount) {
     // Subscribe to a topic
     messageBus->subscribe("count.topic", [](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         // Do nothing, just count
     });
     
@@ -105,7 +111,10 @@ TEST_F(ZeroMQMessageBusTest, MessageCount) {
 
 TEST_F(ZeroMQMessageBusTest, SubscriberCount) {
     // Subscribe to a topic
-    messageBus->subscribe("subscriber.count.topic", [](const std::string& topic, const std::string& message) {});
+    messageBus->subscribe("subscriber.count.topic", [](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
+    });
     
     EXPECT_EQ(messageBus->getSubscriberCount("subscriber.count.topic"), 1);
     EXPECT_EQ(messageBus->getSubscriberCount("nonexistent.topic"), 0);
@@ -121,12 +130,16 @@ TEST_F(ZeroMQMessageBusTest, IsRunning) {
 TEST_F(ZeroMQMessageBusTest, ErrorHandling) {
     // Subscribe with a handler that throws an exception
     messageBus->subscribe("error.topic", [](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         throw std::runtime_error("Test exception");
     });
     
     // Also subscribe with a normal handler
     std::atomic<bool> normalHandlerCalled{false};
     messageBus->subscribe("error.topic", [&normalHandlerCalled](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
+        (void)message; // Suppress unused parameter warning
         normalHandlerCalled = true;
     });
     

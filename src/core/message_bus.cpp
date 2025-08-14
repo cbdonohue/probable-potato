@@ -22,8 +22,7 @@ void MessageBus::setupZeroMQ() {
         
         // Try to bind publisher socket with port retry logic
         publisher_socket_ = std::make_unique<zmq::socket_t>(*context_, ZMQ_PUB);
-        int linger = 0;
-        publisher_socket_->setsockopt(ZMQ_LINGER, &linger, sizeof(linger)); // Don't wait on close
+        publisher_socket_->set(zmq::sockopt::linger, 0); // Don't wait on close
         
         int pub_port = 5555;
         bool pub_bound = false;
@@ -44,8 +43,7 @@ void MessageBus::setupZeroMQ() {
         
         // Try to bind subscriber socket with port retry logic
         subscriber_socket_ = std::make_unique<zmq::socket_t>(*context_, ZMQ_SUB);
-        int sub_linger = 0;
-        subscriber_socket_->setsockopt(ZMQ_LINGER, &sub_linger, sizeof(sub_linger)); // Don't wait on close
+        subscriber_socket_->set(zmq::sockopt::linger, 0); // Don't wait on close
         
         int sub_port = 5556;
         bool sub_bound = false;
@@ -100,13 +98,14 @@ void MessageBus::subscribe(const std::string& topic, MessageHandler handler) {
     
     // Subscribe to topic in ZeroMQ
     try {
-        subscriber_socket_->setsockopt(ZMQ_SUBSCRIBE, topic.c_str(), topic.length());
+        subscriber_socket_->set(zmq::sockopt::subscribe, topic);
     } catch (const zmq::error_t& e) {
         std::cerr << "ZeroMQ subscribe error: " << e.what() << std::endl;
     }
 }
 
 void MessageBus::unsubscribe(const std::string& topic, MessageHandler handler) {
+    (void)handler; // Suppress unused parameter warning
     std::lock_guard<std::mutex> lock(subscribersMutex_);
     auto it = subscribers_.find(topic);
     if (it != subscribers_.end()) {
@@ -118,7 +117,7 @@ void MessageBus::unsubscribe(const std::string& topic, MessageHandler handler) {
     
     // Unsubscribe from topic in ZeroMQ
     try {
-        subscriber_socket_->setsockopt(ZMQ_UNSUBSCRIBE, topic.c_str(), topic.length());
+        subscriber_socket_->set(zmq::sockopt::unsubscribe, topic);
     } catch (const zmq::error_t& e) {
         std::cerr << "ZeroMQ unsubscribe error: " << e.what() << std::endl;
     }

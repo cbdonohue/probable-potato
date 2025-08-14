@@ -102,7 +102,7 @@ TEST_F(StandaloneAppsTest, ApiServerStandalone) {
     
     // Test configuration
     std::map<std::string, std::string> config = {
-        {"port", "8086"},  // Use different port for testing
+        {"port", "9086"},  // Use different port for testing
         {"host", "127.0.0.1"},
         {"max_connections", "100"},
         {"enable_cors", "true"},
@@ -157,8 +157,14 @@ TEST_F(StandaloneAppsTest, CoreServiceStandalone) {
             std::vector<std::string> getDependencies() const override { return {}; }
             bool isRunning() const override { return false; }
             std::string getStatus() const override { return "stopped"; }
-            bool configure(const std::map<std::string, std::string>& config) override { return true; }
-            void onMessage(const std::string& topic, const std::string& message) override {}
+            bool configure(const std::map<std::string, std::string>& config) override { 
+                (void)config; // Suppress unused parameter warning
+                return true; 
+            }
+            void onMessage(const std::string& topic, const std::string& message) override {
+                (void)topic; // Suppress unused parameter warning
+                (void)message; // Suppress unused parameter warning
+            }
         };
         return std::make_unique<TestModule>();
     });
@@ -216,7 +222,7 @@ TEST_F(StandaloneAppsTest, MonolithicStandalone) {
     auto healthMonitor = moduleManager.getModule("health-monitor");
     if (auto* hm = dynamic_cast<HealthMonitorModule*>(healthMonitor)) {
         HealthCheckConfig apiCheck = {
-            "api-server", "http", "http://127.0.0.1:8083/health", 5000, 10000, 3
+            "api-server", "http", "http://127.0.0.1:9083/health", 5000, 10000, 3
         };
         hm->addHealthCheck(apiCheck);
         
@@ -262,6 +268,7 @@ TEST_F(StandaloneAppsTest, StandaloneAppIntegration) {
     std::string receivedMessage;
     
     coreManager.getMessageBus()->subscribe("standalone.test", [&](const std::string& topic, const std::string& message) {
+        (void)topic; // Suppress unused parameter warning
         receivedMessage = message;
         messageCount++;
     });
@@ -387,8 +394,14 @@ TEST_F(StandaloneAppsTest, StandaloneAppConcurrency) {
                     std::vector<std::string> getDependencies() const override { return {}; }
                     bool isRunning() const override { return false; }
                     std::string getStatus() const override { return "stopped"; }
-                    bool configure(const std::map<std::string, std::string>& config) override { return true; }
-                    void onMessage(const std::string& topic, const std::string& message) override {}
+                    bool configure(const std::map<std::string, std::string>& config) override { 
+                        (void)config; // Suppress unused parameter warning
+                        return true; 
+                    }
+                    void onMessage(const std::string& topic, const std::string& message) override {
+                        (void)topic; // Suppress unused parameter warning
+                        (void)message; // Suppress unused parameter warning
+                    }
                 };
                 return std::make_unique<ConcurrentModule>();
             });
