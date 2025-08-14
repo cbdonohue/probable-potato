@@ -1,5 +1,8 @@
 services:
   core:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.core
     image: swarm-core:latest
     ports:
       - "5555:5555"
@@ -17,6 +20,9 @@ services:
 
 
   health-monitor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.health-monitor
     image: swarm-health-monitor:latest
     ports:
       - "8081:8081"
@@ -38,6 +44,9 @@ services:
       - core
 
   api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
     image: swarm-api:latest
     ports:
       - "8083:8083"

@@ -48,18 +48,18 @@ int main() {
 
         // Add health checks for the API service
         HealthCheckConfig apiCheck = {
-            "api-service", "http", "http://swarm-app_api:8083/health", 5000, 10000, 3
+            "api-service", "http", "http://api:8083/health", 5000, 10000, 3
         };
         monitor->addHealthCheck(apiCheck);
 
         HealthCheckConfig mainCheck = {
-            "main-endpoint", "http", "http://swarm-app_api:8083/", 5000, 15000, 3
+            "main-endpoint", "http", "http://api:8083/", 5000, 15000, 3
         };
         monitor->addHealthCheck(mainCheck);
 
         std::cout << "📋 Added health checks for:" << std::endl;
-        std::cout << "   - Web service health (web:8080/health)" << std::endl;
-        std::cout << "   - Main endpoint (web:8080/)" << std::endl;
+        std::cout << "   - API service health (api:8083/health)" << std::endl;
+        std::cout << "   - Main endpoint (api:8083/)" << std::endl;
 
         // Start the monitor
         monitor->start();
